@@ -5,34 +5,8 @@
              x:Class="ValPlay.App">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- Cores no dicionário raiz para garantir resolução no startup -->
-            <Color x:Key="AppBackground">#0D1117</Color>
-            <Color x:Key="Surface">#161B22</Color>
-            <Color x:Key="SurfaceLight">#30363D</Color>
-            <Color x:Key="Accent">#00B4D8</Color>
-            <Color x:Key="TextPrimary">#F0F6FC</Color>
-            <Color x:Key="TextMuted">#8B949E</Color>
-            <Color x:Key="Primary">#00B4D8</Color>
-            <Color x:Key="PrimaryDark">#0096C7</Color>
-            <Color x:Key="PrimaryDarkText">#E8E8E8</Color>
-            <Color x:Key="Secondary">#1B263B</Color>
-            <Color x:Key="SecondaryDarkText">#90E0EF</Color>
-            <Color x:Key="Tertiary">#03045E</Color>
-            <Color x:Key="White">#FFFFFF</Color>
-            <Color x:Key="Black">#000000</Color>
-            <Color x:Key="Magenta">#D600AA</Color>
-            <Color x:Key="MidnightBlue">#190649</Color>
-            <Color x:Key="OffBlack">#1F1F1F</Color>
-            <Color x:Key="Gray100">#E1E1E1</Color>
-            <Color x:Key="Gray200">#C8C8C8</Color>
-            <Color x:Key="Gray300">#ACACAC</Color>
-            <Color x:Key="Gray400">#919191</Color>
-            <Color x:Key="Gray500">#6E6E6E</Color>
-            <Color x:Key="Gray600">#404040</Color>
-            <Color x:Key="Gray900">#212121</Color>
-            <Color x:Key="Gray950">#141414</Color>
-
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
