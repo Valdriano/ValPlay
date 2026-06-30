@@ -1,0 +1,48 @@
+﻿using CommunityToolkit.Maui;
+using Microsoft.Extensions.Logging;
+using ValPlay.Pages;
+using ValPlay.Platforms.Android;
+using ValPlay.Services;
+using ValPlay.ViewModels;
+
+namespace ValPlay;
+
+public static class MauiProgram
+{
+    public static MauiApp CreateMauiApp()
+    {
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
+            .UseMauiCommunityToolkitMediaElement(isAndroidForegroundServiceEnabled: true)
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            });
+
+        builder.Services.AddSingleton<ISettingsService, SettingsService>();
+        builder.Services.AddSingleton<IMediaLibraryService, MediaLibraryService>();
+        builder.Services.AddSingleton<IPlaybackService, PlaybackService>();
+        builder.Services.AddSingleton<AppBootstrapper>();
+        builder.Services.AddSingleton<ICarAudioService, AndroidCarAudioService>();
+        builder.Services.AddSingleton<ICarNotificationService, AndroidCarNotificationService>();
+
+        builder.Services.AddTransient<PlayerViewModel>();
+        builder.Services.AddTransient<LibraryViewModel>();
+        builder.Services.AddTransient<SettingsViewModel>();
+
+        builder.Services.AddTransient<PlayerPage>();
+        builder.Services.AddTransient<LibraryPage>();
+        builder.Services.AddTransient<SettingsPage>();
+        builder.Services.AddSingleton<AppShell>();
+        builder.Services.AddSingleton<App>();
+
+#if DEBUG
+        builder.Logging.AddDebug();
+#endif
+
+        return builder.Build();
+    }
+}
