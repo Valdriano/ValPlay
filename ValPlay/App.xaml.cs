@@ -1,17 +1,22 @@
-﻿namespace ValPlay;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace ValPlay;
 
 public partial class App : Application
 {
-    private readonly AppShell _shell;
-
-    public App(AppShell shell)
+    public App()
     {
         InitializeComponent();
-        _shell = shell;
-
-        // VW Play: interface escura, sem distrações
         UserAppTheme = AppTheme.Dark;
     }
 
-    protected override Window CreateWindow(IActivationState? activationState) => new(_shell);
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        var services = activationState?.Context?.Services
+            ?? IPlatformApplication.Current?.Services
+            ?? throw new InvalidOperationException("Serviços do aplicativo indisponíveis.");
+
+        var shell = services.GetRequiredService<AppShell>();
+        return new Window(shell);
+    }
 }
