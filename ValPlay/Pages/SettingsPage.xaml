@@ -6,7 +6,7 @@
              x:Class="ValPlay.Pages.SettingsPage"
              x:DataType="vm:SettingsViewModel"
              Title="Configurações"
-             BackgroundColor="{StaticResource Background}">
+             BackgroundColor="{StaticResource AppBackground}">
 
     <controls:VwSafeAreaLayout>
         <ScrollView>

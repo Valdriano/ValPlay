@@ -7,7 +7,7 @@
              x:Class="ValPlay.Pages.LibraryPage"
              x:DataType="vm:LibraryViewModel"
              Title="Biblioteca"
-             BackgroundColor="{StaticResource Background}">
+             BackgroundColor="{StaticResource AppBackground}">
 
     <controls:VwSafeAreaLayout>
         <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="12" RowSpacing="10">

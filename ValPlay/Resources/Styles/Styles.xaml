@@ -402,7 +402,7 @@
 
     <Style TargetType="Page" ApplyToDerivedTypes="True">
         <Setter Property="Padding" Value="0"/>
-        <Setter Property="BackgroundColor" Value="{StaticResource Background}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource AppBackground}" />
     </Style>
 
     <!-- VW Play: interações curtas, alvos de toque grandes (160 DPI) -->
@@ -434,7 +434,7 @@
 
     <Style x:Key="VwPlayButton" TargetType="Button" BasedOn="{StaticResource VwControlButton}">
         <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-        <Setter Property="TextColor" Value="{StaticResource Background}" />
+        <Setter Property="TextColor" Value="{StaticResource AppBackground}" />
         <Setter Property="FontSize" Value="26" />
         <Setter Property="HeightRequest" Value="72" />
         <Setter Property="CornerRadius" Value="36" />
@@ -442,7 +442,7 @@
 
     <Style x:Key="VwPrimaryButton" TargetType="Button" BasedOn="{StaticResource VwControlButton}">
         <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-        <Setter Property="TextColor" Value="{StaticResource Background}" />
+        <Setter Property="TextColor" Value="{StaticResource AppBackground}" />
         <Setter Property="HeightRequest" Value="56" />
         <Setter Property="FontSize" Value="16" />
     </Style>
@@ -471,7 +471,7 @@
     </Style>
 
     <Style TargetType="Shell" ApplyToDerivedTypes="True">
-        <Setter Property="Shell.BackgroundColor" Value="{StaticResource Background}" />
+        <Setter Property="Shell.BackgroundColor" Value="{StaticResource AppBackground}" />
         <Setter Property="Shell.ForegroundColor" Value="{StaticResource TextPrimary}" />
         <Setter Property="Shell.TitleColor" Value="{StaticResource TextPrimary}" />
         <Setter Property="Shell.DisabledColor" Value="{StaticResource TextMuted}" />

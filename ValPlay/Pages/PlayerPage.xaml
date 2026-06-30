@@ -8,7 +8,7 @@
              x:Class="ValPlay.Pages.PlayerPage"
              x:DataType="vm:PlayerViewModel"
              Title="Player"
-             BackgroundColor="{StaticResource Background}">
+             BackgroundColor="{StaticResource AppBackground}">
 
     <controls:VwSafeAreaLayout>
         <Grid RowDefinitions="*,Auto,Auto" Padding="16" RowSpacing="12">
