@@ -1,5 +1,7 @@
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Views;
+using ValPlay.Controls;
+using ValPlay.Helpers;
 using ValPlay.Services;
 using ValPlay.ViewModels;
 
@@ -30,6 +32,9 @@ public partial class PlayerPage : ContentPage
         {
             if (e.PropertyName is nameof(PlayerViewModel.MediaPath) or nameof(PlayerViewModel.IsPlaying))
                 SyncMediaElement();
+
+            if (e.PropertyName == nameof(PlayerViewModel.IsFullscreen))
+                ApplyFullscreenMode(_viewModel.IsFullscreen);
         };
 
         MediaPlayer.MediaOpened += OnMediaOpened;
@@ -42,13 +47,46 @@ public partial class PlayerPage : ContentPage
     {
         base.OnAppearing();
         SyncMediaElement();
+        ApplyFullscreenMode(_viewModel.IsFullscreen);
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        _viewModel.ExitFullscreen();
+        ApplyFullscreenMode(false);
+
         if (MediaPlayer.CurrentState == MediaElementState.Playing)
             MediaPlayer.Pause();
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (_viewModel.IsFullscreen)
+        {
+            _viewModel.ExitFullscreen();
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
+
+    private void ApplyFullscreenMode(bool isFullscreen)
+    {
+        Shell.SetTabBarIsVisible(this, !isFullscreen);
+
+        if (SafeArea is VwSafeAreaLayout safeArea)
+        {
+            safeArea.MaximumWidthRequest = isFullscreen ? double.PositiveInfinity : VwPlayConstants.AppAreaWidth;
+            safeArea.MaximumHeightRequest = isFullscreen ? double.PositiveInfinity : VwPlayConstants.AppAreaHeight;
+        }
+
+        PlayerLayout.Padding = isFullscreen ? new Thickness(0) : new Thickness(16, 12);
+        PlayerLayout.RowSpacing = isFullscreen ? 0 : 0;
+        BackgroundColor = isFullscreen ? Colors.Black : (Color)Application.Current!.Resources["AppBackground"]!;
+
+        MediaPlayer.Aspect = isFullscreen ? Aspect.AspectFill : Aspect.AspectFit;
+        FullscreenButton.Margin = isFullscreen ? new Thickness(16) : new Thickness(8);
     }
 
     private void OnAudioFocusChanged(object? sender, CarAudioFocusChange change)

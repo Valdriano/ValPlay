@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ValPlay.ViewModels"
+             xmlns:controls="clr-namespace:ValPlay.Controls"
+             x:Class="ValPlay.Pages.AboutPage"
+             x:DataType="vm:AboutViewModel"
+             Title="Sobre"
+             BackgroundColor="{StaticResource AppBackground}">
+
+    <controls:VwSafeAreaLayout>
+        <ScrollView>
+            <VerticalStackLayout Padding="24" Spacing="20" HorizontalOptions="Center">
+
+                <Image Source="vw_logo"
+                       HeightRequest="140"
+                       WidthRequest="140"
+                       Aspect="AspectFit"
+                       HorizontalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding LogoTappedCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+
+                <Label Text="{Binding AppName}"
+                       Style="{StaticResource VwTitle}"
+                       FontSize="28"
+                       HorizontalOptions="Center" />
+
+                <Label Text="{Binding PlatformLabel}"
+                       Style="{StaticResource VwSubtitle}"
+                       HorizontalOptions="Center" />
+
+                <BoxView HeightRequest="1"
+                         Color="{StaticResource SurfaceLight}"
+                         Margin="0,8" />
+
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                    <Label Text="Versão"
+                           Style="{StaticResource VwCaption}"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding AppVersion}"
+                           FontSize="20"
+                           TextColor="{StaticResource TextPrimary}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                    <Label Text="Data da compilação"
+                           Style="{StaticResource VwCaption}"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding BuildLabel}"
+                           FontSize="18"
+                           TextColor="{StaticResource Accent}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+
+                <Label Text="Reprodutor de mídia para central VW Play"
+                       Style="{StaticResource VwCaption}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,16,0,0" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </controls:VwSafeAreaLayout>
+</ContentPage>

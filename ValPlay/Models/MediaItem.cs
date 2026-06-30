@@ -8,6 +8,7 @@ public sealed class MediaItem
     public required MediaType Type { get; init; }
     public string? Artist { get; init; }
     public string? Album { get; init; }
+    public int? Year { get; init; }
     public TimeSpan? Duration { get; init; }
 
     public string DisplayTitle => string.IsNullOrWhiteSpace(Title) ? FileName : Title;

@@ -4,13 +4,20 @@
              xmlns:vm="clr-namespace:ValPlay.ViewModels"
              xmlns:models="clr-namespace:ValPlay.Models"
              xmlns:controls="clr-namespace:ValPlay.Controls"
+             xmlns:conv="clr-namespace:ValPlay.Converters"
              x:Class="ValPlay.Pages.LibraryPage"
              x:DataType="vm:LibraryViewModel"
              Title="Biblioteca"
              BackgroundColor="{StaticResource AppBackground}">
 
+    <ContentPage.Resources>
+        <conv:LibraryKindToIconConverter x:Key="FolderIconConverter" />
+        <conv:LibraryKindToIsFolderConverter x:Key="IsFolderConverter" />
+        <conv:LibraryKindToIsMediaConverter x:Key="IsMediaConverter" />
+    </ContentPage.Resources>
+
     <controls:VwSafeAreaLayout>
-        <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="12" RowSpacing="10">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Padding="12" RowSpacing="10">
 
             <SearchBar Placeholder="Buscar música ou vídeo..."
                        Text="{Binding SearchText}"
@@ -29,21 +36,37 @@
                         WidthRequest="140" />
             </Grid>
 
-            <ActivityIndicator Grid.Row="2"
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="Auto,*,Auto"
+                  ColumnSpacing="8"
+                  IsVisible="{Binding IsSearchMode, Converter={StaticResource InvertedBoolConverter}}">
+                <Button Text="◀"
+                        Command="{Binding GoBackCommand}"
+                        IsEnabled="{Binding CanGoBack}"
+                        Style="{StaticResource VwControlButton}"
+                        WidthRequest="56"
+                        FontSize="18" />
+                <Label Grid.Column="1"
+                       Text="{Binding CurrentFolderLabel}"
+                       Style="{StaticResource VwTitle}"
+                       FontSize="18"
+                       VerticalOptions="Center"
+                       LineBreakMode="TailTruncation" />
+            </Grid>
+
+            <ActivityIndicator Grid.Row="3"
                                IsRunning="{Binding IsScanning}"
                                IsVisible="{Binding IsScanning}"
                                Color="{StaticResource Accent}" />
 
-            <Label Grid.Row="2"
+            <Label Grid.Row="3"
                    Text="{Binding StatusMessage}"
                    Style="{StaticResource VwCaption}"
                    IsVisible="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}" />
 
-            <CollectionView Grid.Row="3"
-                            ItemsSource="{Binding Items}"
-                            SelectedItem="{Binding SelectedItem}"
-                            SelectionMode="Single"
-                            SelectionChanged="OnSelectionChanged">
+            <CollectionView Grid.Row="4"
+                            ItemsSource="{Binding Rows}"
+                            SelectionMode="None">
                 <CollectionView.EmptyView>
                     <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8">
                         <Label Text="📂" FontSize="48" HorizontalOptions="Center" />
@@ -53,26 +76,52 @@
                     </VerticalStackLayout>
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:MediaItem">
+                    <DataTemplate x:DataType="models:LibraryRow">
                         <Grid Padding="10,8"
-                              ColumnDefinitions="Auto,*,Auto"
-                              ColumnSpacing="10"
+                              ColumnDefinitions="Auto,*,Auto,Auto"
+                              ColumnSpacing="8"
                               BackgroundColor="{StaticResource Surface}">
-                            <Label Text="{Binding Type, Converter={StaticResource MediaIconConverter}}"
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=OpenOrPlayCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Grid.GestureRecognizers>
+
+                            <Label Text="{Binding Kind, Converter={StaticResource FolderIconConverter}}"
                                    FontSize="22"
-                                   VerticalOptions="Center" />
+                                   VerticalOptions="Center"
+                                   IsVisible="{Binding Kind, Converter={StaticResource IsFolderConverter}}" />
+                            <Label Text="{Binding Media.Type, Converter={StaticResource MediaIconConverter}}"
+                                   FontSize="22"
+                                   VerticalOptions="Center"
+                                   IsVisible="{Binding Kind, Converter={StaticResource IsMediaConverter}}" />
+
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
-                                <Label Text="{Binding DisplayTitle}"
+                                <Label Text="{Binding Title}"
                                        FontSize="18"
                                        TextColor="{StaticResource TextPrimary}"
                                        LineBreakMode="TailTruncation" />
-                                <Label Text="{Binding DisplaySubtitle}"
+                                <Label Text="{Binding Subtitle}"
                                        Style="{StaticResource VwCaption}" />
                             </VerticalStackLayout>
+
                             <Button Grid.Column="2"
+                                    Text="▶▶"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayFolderCommand}"
+                                    CommandParameter="{Binding .}"
+                                    IsVisible="{Binding Kind, Converter={StaticResource IsFolderConverter}}"
+                                    Style="{StaticResource VwControlButton}"
+                                    WidthRequest="56"
+                                    HeightRequest="56"
+                                    FontSize="16"
+                                    CornerRadius="28"
+                                    VerticalOptions="Center" />
+
+                            <Button Grid.Column="3"
                                     Text="▶"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayItemCommand}"
                                     CommandParameter="{Binding .}"
+                                    IsVisible="{Binding Kind, Converter={StaticResource IsMediaConverter}}"
                                     Style="{StaticResource VwPlayButton}"
                                     WidthRequest="56"
                                     HeightRequest="56"

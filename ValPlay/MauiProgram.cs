@@ -24,6 +24,7 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
         builder.Services.AddSingleton<IMediaLibraryService, MediaLibraryService>();
+        builder.Services.AddSingleton<IMediaMetadataService, MediaMetadataService>();
         builder.Services.AddSingleton<IPlaybackService, PlaybackService>();
         builder.Services.AddSingleton<AppBootstrapper>();
         builder.Services.AddSingleton<ICarAudioService, AndroidCarAudioService>();
@@ -32,10 +33,12 @@ public static class MauiProgram
         builder.Services.AddTransient<PlayerViewModel>();
         builder.Services.AddTransient<LibraryViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
+        builder.Services.AddTransient<AboutViewModel>();
 
         builder.Services.AddTransient<PlayerPage>();
         builder.Services.AddTransient<LibraryPage>();
         builder.Services.AddTransient<SettingsPage>();
+        builder.Services.AddTransient<AboutPage>();
         builder.Services.AddSingleton<AppShell>();
 
 #if DEBUG

@@ -56,10 +56,10 @@
                         Command="{Binding ClearSavedSessionCommand}"
                         Style="{StaticResource VwControlButton}" />
 
-                <Label Text="{Binding AppVersion, StringFormat='ValPlay v{0} — VW Play'}"
-                       Style="{StaticResource VwCaption}"
-                       HorizontalOptions="Center"
-                       Margin="0,16,0,0" />
+            <Label Text="{Binding AppVersion, StringFormat='ValPlay v{0}'}"
+                   Style="{StaticResource VwCaption}"
+                   HorizontalOptions="Center"
+                   Margin="0,16,0,0" />
             </VerticalStackLayout>
         </ScrollView>
     </controls:VwSafeAreaLayout>

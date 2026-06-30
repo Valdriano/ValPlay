@@ -10,11 +10,17 @@ public partial class PlayerViewModel : ObservableObject
 {
     private readonly IPlaybackService _playbackService;
     private readonly ISettingsService _settingsService;
+    private readonly IMediaMetadataService _metadataService;
+    private CancellationTokenSource? _albumArtCts;
 
-    public PlayerViewModel(IPlaybackService playbackService, ISettingsService settingsService)
+    public PlayerViewModel(
+        IPlaybackService playbackService,
+        ISettingsService settingsService,
+        IMediaMetadataService metadataService)
     {
         _playbackService = playbackService;
         _settingsService = settingsService;
+        _metadataService = metadataService;
 
         _playbackService.StateChanged += (_, _) => RefreshFromService();
         _playbackService.MediaChanged += (_, media) => OnMediaChanged(media);
@@ -27,6 +33,21 @@ public partial class PlayerViewModel : ObservableObject
 
     [ObservableProperty]
     private string _subtitle = "Selecione um arquivo na biblioteca";
+
+    [ObservableProperty]
+    private string _artist = "—";
+
+    [ObservableProperty]
+    private string _album = "—";
+
+    [ObservableProperty]
+    private string _year = "—";
+
+    [ObservableProperty]
+    private string _yearLabel = "Ano: —";
+
+    [ObservableProperty]
+    private string _durationLabel = "Duração: 00:00";
 
     [ObservableProperty]
     private bool _isPlaying;
@@ -44,10 +65,18 @@ public partial class PlayerViewModel : ObservableObject
     private TimeSpan _duration;
 
     [ObservableProperty]
+    private TimeSpan _trackDuration;
+
+    [ObservableProperty]
     private double _positionSeconds;
 
     [ObservableProperty]
     private bool _isVideo;
+
+    [ObservableProperty]
+    private bool _isFullscreen;
+
+    public bool ShowPlayerChrome => !IsFullscreen;
 
     [ObservableProperty]
     private bool _hasMedia;
@@ -55,8 +84,14 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty]
     private string? _mediaPath;
 
-    public bool ShouldResumeFromSavedPosition { get; private set; }
-    public double SavedPositionSeconds { get; private set; }
+    [ObservableProperty]
+    private ImageSource? _albumArt;
+
+    public bool HasAlbumArt => AlbumArt is not null;
+
+    public bool IsAudio => HasMedia && !IsVideo;
+
+    public bool ShowAudioProgress => IsAudio && HasMedia && ShowPlayerChrome;
 
     [RelayCommand]
     private void TogglePlayPause() => _playbackService.TogglePlayPause();
@@ -72,6 +107,45 @@ public partial class PlayerViewModel : ObservableObject
 
     [RelayCommand]
     private void CycleRepeat() => _playbackService.CycleRepeatMode();
+
+    [RelayCommand]
+    private void ToggleFullscreen()
+    {
+        if (!IsVideo)
+            return;
+
+        IsFullscreen = !IsFullscreen;
+    }
+
+    public void ExitFullscreen()
+    {
+        if (IsFullscreen)
+            IsFullscreen = false;
+    }
+
+    partial void OnIsFullscreenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowPlayerChrome));
+        OnPropertyChanged(nameof(ShowAudioProgress));
+    }
+
+    partial void OnIsVideoChanged(bool value)
+    {
+        if (!value)
+            ExitFullscreen();
+
+        OnPropertyChanged(nameof(IsAudio));
+        OnPropertyChanged(nameof(ShowAudioProgress));
+    }
+
+    partial void OnHasMediaChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsAudio));
+        OnPropertyChanged(nameof(ShowAudioProgress));
+    }
+
+    partial void OnAlbumArtChanged(ImageSource? value) =>
+        OnPropertyChanged(nameof(HasAlbumArt));
 
     public void OnPlaybackStarted()
     {
@@ -109,27 +183,71 @@ public partial class PlayerViewModel : ObservableObject
 
     private void OnMediaChanged(MediaItem? media)
     {
+        _albumArtCts?.Cancel();
+        _albumArtCts = new CancellationTokenSource();
+        var token = _albumArtCts.Token;
+
         if (media is null)
         {
             HasMedia = false;
             MediaPath = null;
             Title = "Nenhuma mídia";
             Subtitle = "Selecione um arquivo na biblioteca";
+            Artist = "—";
+            Album = "—";
+            Year = "—";
+            YearLabel = "Ano: —";
+            DurationLabel = "Duração: 00:00";
+            TrackDuration = TimeSpan.Zero;
+            AlbumArt = null;
             IsVideo = false;
+            ExitFullscreen();
             return;
         }
 
         HasMedia = true;
-        Title = media.DisplayTitle;
-        Subtitle = media.DisplaySubtitle;
+        ApplyMediaMetadata(media);
         IsVideo = media.Type == MediaType.Video;
         MediaPath = media.Path;
+        AlbumArt = null;
+
+        if (!IsVideo)
+            _ = LoadAlbumArtAsync(media.Path, token);
 
         var settings = _settingsService.Current;
         ShouldResumeFromSavedPosition = settings.ResumePlaybackOnStart &&
                                         settings.LastMediaPath == media.Path &&
                                         settings.LastPositionSeconds > 1;
         SavedPositionSeconds = settings.LastPositionSeconds;
+    }
+
+    private async Task LoadAlbumArtAsync(string path, CancellationToken cancellationToken)
+    {
+        var art = await _metadataService.LoadAlbumArtAsync(path, cancellationToken);
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        MainThread.BeginInvokeOnMainThread(() => AlbumArt = art);
+    }
+
+    private void ApplyMediaMetadata(MediaItem media)
+    {
+        Title = media.DisplayTitle;
+        Subtitle = media.DisplaySubtitle;
+        Artist = string.IsNullOrWhiteSpace(media.Artist) ? "Artista desconhecido" : media.Artist;
+        Album = string.IsNullOrWhiteSpace(media.Album) ? "Álbum desconhecido" : media.Album;
+        Year = media.Year is > 0 ? media.Year.Value.ToString() : "—";
+        YearLabel = media.Year is > 0 ? $"Ano: {media.Year.Value}" : "Ano: —";
+        TrackDuration = media.Duration ?? TimeSpan.Zero;
+        DurationLabel = $"Duração: {FormatDuration(TrackDuration)}";
+    }
+
+    private static string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalHours >= 1)
+            return duration.ToString(@"h\:mm\:ss");
+
+        return duration.ToString(@"m\:ss");
     }
 
     private void RefreshFromService()
@@ -144,9 +262,11 @@ public partial class PlayerViewModel : ObservableObject
 
         if (_playbackService.CurrentMedia is { } media)
         {
-            Title = media.DisplayTitle;
-            Subtitle = media.DisplaySubtitle;
+            ApplyMediaMetadata(media);
             IsVideo = media.Type == MediaType.Video;
         }
     }
+
+    public bool ShouldResumeFromSavedPosition { get; private set; }
+    public double SavedPositionSeconds { get; private set; }
 }

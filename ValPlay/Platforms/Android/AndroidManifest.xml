@@ -9,6 +9,7 @@
 
 	<!-- VW Play: Android Automotive 9.0 (API 28) / AOSP sem GMS -->
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 

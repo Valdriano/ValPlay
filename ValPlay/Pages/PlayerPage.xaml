@@ -3,96 +3,237 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:vm="clr-namespace:ValPlay.ViewModels"
-             xmlns:conv="clr-namespace:ValPlay.Converters"
              xmlns:controls="clr-namespace:ValPlay.Controls"
              x:Class="ValPlay.Pages.PlayerPage"
              x:DataType="vm:PlayerViewModel"
              Title="Player"
              BackgroundColor="{StaticResource AppBackground}">
 
-    <controls:VwSafeAreaLayout>
-        <Grid RowDefinitions="*,Auto,Auto" Padding="16" RowSpacing="12">
+    <controls:VwSafeAreaLayout x:Name="SafeArea">
+        <Grid x:Name="PlayerLayout" RowDefinitions="*,Auto" Padding="16,12" RowSpacing="0">
 
-            <Grid Grid.Row="0">
-                <toolkit:MediaElement x:Name="MediaPlayer"
-                                      ShouldShowPlaybackControls="False"
-                                      Aspect="AspectFit"
-                                      IsVisible="{Binding IsVideo}"
-                                      BackgroundColor="Black" />
+            <!-- Player (sempre na árvore; oculto visualmente no modo áudio) -->
+            <toolkit:MediaElement x:Name="MediaPlayer"
+                                  Grid.Row="0"
+                                  ShouldShowPlaybackControls="False"
+                                  Aspect="AspectFit"
+                                  IsVisible="{Binding IsVideo}"
+                                  BackgroundColor="Black"
+                                  ZIndex="0" />
 
-                <VerticalStackLayout IsVisible="{Binding IsVideo, Converter={StaticResource InvertedBoolConverter}}"
-                                     VerticalOptions="Center"
-                                     HorizontalOptions="Center"
-                                     Spacing="8">
-                    <Label Text="🎵"
-                           FontSize="64"
-                           HorizontalOptions="Center" />
-                    <Label Text="{Binding Title}"
-                           Style="{StaticResource VwTitle}"
-                           HorizontalTextAlignment="Center"
-                           LineBreakMode="WordWrap"
-                           MaxLines="2" />
-                    <Label Text="{Binding Subtitle}"
-                           Style="{StaticResource VwSubtitle}"
-                           HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
+            <!-- Vídeo -->
+            <Grid x:Name="VideoLayout"
+                  Grid.Row="0"
+                  IsVisible="{Binding IsVideo}"
+                  ZIndex="1">
+                <Button x:Name="FullscreenButton"
+                        Text="{Binding IsFullscreen, Converter={StaticResource FullscreenIconConverter}}"
+                        Command="{Binding ToggleFullscreenCommand}"
+                        HorizontalOptions="End"
+                        VerticalOptions="End"
+                        Margin="8"
+                        WidthRequest="56"
+                        HeightRequest="56"
+                        CornerRadius="28"
+                        FontSize="22"
+                        BackgroundColor="#99000000"
+                        TextColor="White" />
             </Grid>
 
-            <VerticalStackLayout Grid.Row="1" Spacing="6" IsVisible="{Binding HasMedia}">
+            <!-- Áudio: capa | metadados + controles -->
+            <Grid x:Name="AudioLayout"
+                  Grid.Row="0"
+                  IsVisible="{Binding IsAudio}"
+                  ColumnDefinitions="220,*"
+                  ColumnSpacing="24"
+                  VerticalOptions="Fill"
+                  ZIndex="2">
+
+                <Border Grid.Column="0"
+                        Stroke="{StaticResource SurfaceLight}"
+                        StrokeThickness="1"
+                        BackgroundColor="{StaticResource Surface}"
+                        WidthRequest="220"
+                        HeightRequest="220"
+                        VerticalOptions="Center"
+                        HorizontalOptions="Start">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12" />
+                    </Border.StrokeShape>
+
+                    <Grid>
+                        <Image Source="{Binding AlbumArt}"
+                               Aspect="AspectFill"
+                               IsVisible="{Binding HasAlbumArt}" />
+                        <Label Text="🎵"
+                               FontSize="72"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               IsVisible="{Binding HasAlbumArt, Converter={StaticResource InvertedBoolConverter}}" />
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Column="1"
+                      VerticalOptions="Fill">
+
+                    <VerticalStackLayout Spacing="28"
+                                         VerticalOptions="Center"
+                                         HorizontalOptions="Center"
+                                         MaximumWidthRequest="760">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{Binding Title}"
+                                   FontSize="28"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   LineBreakMode="TailTruncation"
+                                   MaxLines="2" />
+                            <Label Text="{Binding Artist}"
+                                   FontSize="20"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   LineBreakMode="TailTruncation" />
+                            <Label Text="{Binding Album}"
+                                   FontSize="18"
+                                   TextColor="{StaticResource TextMuted}"
+                                   LineBreakMode="TailTruncation" />
+                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="24">
+                                <Label Text="{Binding YearLabel}"
+                                       Style="{StaticResource VwCaption}"
+                                       FontSize="16" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding DurationLabel}"
+                                       Style="{StaticResource VwCaption}"
+                                       FontSize="16" />
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <Grid ColumnDefinitions="*,*,*,*,*"
+                              ColumnSpacing="12"
+                              MaximumWidthRequest="520"
+                              IsVisible="{Binding ShowPlayerChrome}">
+                            <Button Text="🔀"
+                                    Command="{Binding ToggleShuffleCommand}"
+                                    Style="{StaticResource VwControlButton}"
+                                    TextColor="{Binding ShuffleEnabled, Converter={StaticResource ShuffleColorConverter}}" />
+                            <Button Grid.Column="1"
+                                    Text="⏮"
+                                    Command="{Binding PreviousCommand}"
+                                    Style="{StaticResource VwControlButton}" />
+                            <Button Grid.Column="2"
+                                    Text="{Binding IsPlaying, Converter={StaticResource PlayPauseConverter}}"
+                                    Command="{Binding TogglePlayPauseCommand}"
+                                    Style="{StaticResource VwPlayButton}"
+                                    WidthRequest="72"
+                                    HeightRequest="72" />
+                            <Button Grid.Column="3"
+                                    Text="⏭"
+                                    Command="{Binding NextCommand}"
+                                    Style="{StaticResource VwControlButton}" />
+                            <Button Grid.Column="4"
+                                    Text="{Binding RepeatMode, Converter={StaticResource RepeatConverter}}"
+                                    Command="{Binding CycleRepeatCommand}"
+                                    Style="{StaticResource VwControlButton}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Grid>
+            </Grid>
+
+            <!-- Estado vazio -->
+            <VerticalStackLayout Grid.Row="0"
+                                 IsVisible="{Binding HasMedia, Converter={StaticResource InvertedBoolConverter}}"
+                                 VerticalOptions="Center"
+                                 HorizontalOptions="Center"
+                                 Spacing="8">
+                <Label Text="🎵"
+                       FontSize="64"
+                       HorizontalOptions="Center" />
                 <Label Text="{Binding Title}"
                        Style="{StaticResource VwTitle}"
-                       LineBreakMode="TailTruncation"
-                       IsVisible="{Binding IsVideo}" />
+                       HorizontalTextAlignment="Center" />
                 <Label Text="{Binding Subtitle}"
                        Style="{StaticResource VwSubtitle}"
-                       IsVisible="{Binding IsVideo}" />
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
 
-                <Slider Minimum="0"
+            <!-- Barra de progresso em largura total (áudio) -->
+            <Grid x:Name="AudioProgressLayout"
+                  Grid.Row="1"
+                  RowDefinitions="Auto,Auto"
+                  RowSpacing="4"
+                  Margin="-16,8,-16,0"
+                  IsVisible="{Binding ShowAudioProgress}">
+                <Slider Grid.Row="0"
+                        Minimum="0"
                         Maximum="{Binding Duration.TotalSeconds}"
                         Value="{Binding PositionSeconds}"
                         DragStarted="OnSeekStarted"
                         DragCompleted="OnSeekCompleted"
-                        Style="{StaticResource VwSlider}" />
-
-                <Grid ColumnDefinitions="Auto,*,Auto">
+                        Style="{StaticResource VwSlider}"
+                        Margin="8,0" />
+                <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="16,0">
                     <Label Text="{Binding Position, Converter={StaticResource TimeSpanConverter}}"
                            Style="{StaticResource VwCaption}" />
                     <Label Grid.Column="2"
                            Text="{Binding Duration, Converter={StaticResource TimeSpanConverter}}"
                            Style="{StaticResource VwCaption}" />
                 </Grid>
-            </VerticalStackLayout>
-
-            <Grid Grid.Row="2"
-                  ColumnDefinitions="*,*,*,*,*"
-                  ColumnSpacing="10"
-                  VerticalOptions="End">
-
-                <Button Text="🔀"
-                        Command="{Binding ToggleShuffleCommand}"
-                        Style="{StaticResource VwControlButton}"
-                        TextColor="{Binding ShuffleEnabled, Converter={StaticResource ShuffleColorConverter}}" />
-
-                <Button Grid.Column="1"
-                        Text="⏮"
-                        Command="{Binding PreviousCommand}"
-                        Style="{StaticResource VwControlButton}" />
-
-                <Button Grid.Column="2"
-                        Text="{Binding IsPlaying, Converter={StaticResource PlayPauseConverter}}"
-                        Command="{Binding TogglePlayPauseCommand}"
-                        Style="{StaticResource VwPlayButton}" />
-
-                <Button Grid.Column="3"
-                        Text="⏭"
-                        Command="{Binding NextCommand}"
-                        Style="{StaticResource VwControlButton}" />
-
-                <Button Grid.Column="4"
-                        Text="{Binding RepeatMode, Converter={StaticResource RepeatConverter}}"
-                        Command="{Binding CycleRepeatCommand}"
-                        Style="{StaticResource VwControlButton}" />
             </Grid>
+
+            <!-- Chrome do vídeo -->
+            <VerticalStackLayout x:Name="VideoChrome"
+                                 Grid.Row="1"
+                                 Spacing="6"
+                                 Margin="0,8,0,0"
+                                 IsVisible="{Binding IsVideo}">
+                <VerticalStackLayout IsVisible="{Binding ShowPlayerChrome}" Spacing="6">
+                    <VerticalStackLayout IsVisible="{Binding HasMedia}" Spacing="6">
+                        <Label Text="{Binding Title}"
+                               Style="{StaticResource VwTitle}"
+                               LineBreakMode="TailTruncation" />
+                        <Label Text="{Binding Subtitle}"
+                               Style="{StaticResource VwSubtitle}" />
+
+                        <Slider Minimum="0"
+                                Maximum="{Binding Duration.TotalSeconds}"
+                                Value="{Binding PositionSeconds}"
+                                DragStarted="OnSeekStarted"
+                                DragCompleted="OnSeekCompleted"
+                                Style="{StaticResource VwSlider}" />
+
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Label Text="{Binding Position, Converter={StaticResource TimeSpanConverter}}"
+                                   Style="{StaticResource VwCaption}" />
+                            <Label Grid.Column="2"
+                                   Text="{Binding Duration, Converter={StaticResource TimeSpanConverter}}"
+                                   Style="{StaticResource VwCaption}" />
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*,*,*,*,*"
+                          ColumnSpacing="10"
+                          IsVisible="{Binding HasMedia}">
+                        <Button Text="🔀"
+                                Command="{Binding ToggleShuffleCommand}"
+                                Style="{StaticResource VwControlButton}"
+                                TextColor="{Binding ShuffleEnabled, Converter={StaticResource ShuffleColorConverter}}" />
+                        <Button Grid.Column="1"
+                                Text="⏮"
+                                Command="{Binding PreviousCommand}"
+                                Style="{StaticResource VwControlButton}" />
+                        <Button Grid.Column="2"
+                                Text="{Binding IsPlaying, Converter={StaticResource PlayPauseConverter}}"
+                                Command="{Binding TogglePlayPauseCommand}"
+                                Style="{StaticResource VwPlayButton}" />
+                        <Button Grid.Column="3"
+                                Text="⏭"
+                                Command="{Binding NextCommand}"
+                                Style="{StaticResource VwControlButton}" />
+                        <Button Grid.Column="4"
+                                Text="{Binding RepeatMode, Converter={StaticResource RepeatConverter}}"
+                                Command="{Binding CycleRepeatCommand}"
+                                Style="{StaticResource VwControlButton}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
         </Grid>
     </controls:VwSafeAreaLayout>
 </ContentPage>

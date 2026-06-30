@@ -71,6 +71,61 @@ public sealed class MediaLibraryService : IMediaLibraryService
         return roots.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    public IReadOnlyList<MediaFolder> GetSubfolders(string parentPath)
+    {
+        var parent = NormalizePath(parentPath);
+        if (!Directory.Exists(parent))
+            return [];
+
+        var folders = new List<MediaFolder>();
+
+        try
+        {
+            foreach (var directory in Directory.EnumerateDirectories(parent))
+            {
+                if (ShouldSkipFolder(directory))
+                    continue;
+
+                var count = GetItemsInFolder(directory, recursive: true).Count;
+                if (count == 0)
+                    continue;
+
+                folders.Add(new MediaFolder
+                {
+                    Path = directory,
+                    Name = Path.GetFileName(directory) ?? directory,
+                    ItemCount = count
+                });
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // ignored
+        }
+        catch (DirectoryNotFoundException)
+        {
+            // ignored
+        }
+
+        return folders.OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    public IReadOnlyList<MediaItem> GetItemsInFolder(string folderPath, bool recursive = false)
+    {
+        var folder = NormalizePath(folderPath);
+
+        return _items
+            .Where(item =>
+            {
+                var directory = NormalizePath(Path.GetDirectoryName(item.Path) ?? string.Empty);
+                return recursive
+                    ? directory.StartsWith(folder, StringComparison.OrdinalIgnoreCase)
+                    : directory.Equals(folder, StringComparison.OrdinalIgnoreCase);
+            })
+            .OrderBy(item => item.DisplayTitle, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     public async Task ScanAsync(string? rootPath = null, CancellationToken cancellationToken = default)
     {
         if (IsScanning)
@@ -124,13 +179,8 @@ public sealed class MediaLibraryService : IMediaLibraryService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var name = Path.GetFileName(directory);
-                if (name.StartsWith('.') ||
-                    name.Equals("Android", StringComparison.OrdinalIgnoreCase) ||
-                    name.Equals("LOST.DIR", StringComparison.OrdinalIgnoreCase))
-                {
+                if (ShouldSkipFolder(directory))
                     continue;
-                }
 
                 ScanDirectory(directory, cancellationToken);
             }
@@ -152,13 +202,37 @@ public sealed class MediaLibraryService : IMediaLibraryService
 
         var fileName = Path.GetFileName(filePath);
         var title = Path.GetFileNameWithoutExtension(filePath);
+        string? artist = null;
+        string? album = null;
+        int? year = null;
+        TimeSpan? duration = null;
+
+        if (MediaFormatHelper.IsAudio(filePath))
+        {
+            (artist, album, year, duration) = MediaTagReader.ReadAudioTags(filePath);
+        }
 
         _items.Add(new MediaItem
         {
             Path = filePath,
             FileName = fileName,
             Title = title,
-            Type = MediaFormatHelper.GetMediaType(filePath)
+            Type = MediaFormatHelper.GetMediaType(filePath),
+            Artist = artist,
+            Album = album,
+            Year = year,
+            Duration = duration
         });
     }
+
+    private static bool ShouldSkipFolder(string directory)
+    {
+        var name = Path.GetFileName(directory);
+        return name.StartsWith('.') ||
+               name.Equals("Android", StringComparison.OrdinalIgnoreCase) ||
+               name.Equals("LOST.DIR", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizePath(string path) =>
+        path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 }

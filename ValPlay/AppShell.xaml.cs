@@ -9,6 +9,7 @@ public partial class AppShell : Shell
         LibraryPage libraryPage,
         PlayerPage playerPage,
         SettingsPage settingsPage,
+        AboutPage aboutPage,
         AppBootstrapper bootstrapper)
     {
         InitializeComponent();
@@ -32,6 +33,13 @@ public partial class AppShell : Shell
             Title = "Ajustes",
             Content = settingsPage,
             Route = "SettingsPage"
+        });
+
+        MainTabBar.Items.Add(new ShellContent
+        {
+            Title = "Sobre",
+            Content = aboutPage,
+            Route = "AboutPage"
         });
 
         _ = InitializeAppAsync(bootstrapper);
