@@ -16,6 +16,10 @@ public sealed class AudioVisualizationView : ContentView
     BindableProperty.Create(nameof(Bands), typeof(float[]), typeof(AudioVisualizationView),
       Array.Empty<float>(), propertyChanged: OnRenderPropertyChanged);
 
+  public static readonly BindableProperty BandsVersionProperty =
+    BindableProperty.Create(nameof(BandsVersion), typeof(int), typeof(AudioVisualizationView),
+      0, propertyChanged: OnRenderPropertyChanged);
+
   private readonly AudioVisualizationDrawable _drawable = new();
   private readonly GraphicsView _graphicsView;
   private readonly IDispatcherTimer _timer;
@@ -56,10 +60,19 @@ public sealed class AudioVisualizationView : ContentView
     set => SetValue(BandsProperty, value);
   }
 
+  public int BandsVersion
+  {
+    get => (int)GetValue(BandsVersionProperty);
+    set => SetValue(BandsVersionProperty, value);
+  }
+
   private static void OnRenderPropertyChanged(BindableObject bindable, object _, object __)
   {
-    if (bindable is AudioVisualizationView view)
-      view.SyncDrawable();
+    if (bindable is not AudioVisualizationView view)
+      return;
+
+    view.SyncDrawable();
+    view._graphicsView.Invalidate();
   }
 
   private void OnTimerTick(object? sender, EventArgs e)

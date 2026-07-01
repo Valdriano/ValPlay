@@ -1,11 +1,13 @@
 #if ANDROID
-using AndroidEqualizer = Android.Media.Audiofx.Equalizer;
+using AndroidX.Media3.Common;
+using AndroidX.Media3.UI;
+using CommunityToolkit.Maui.Views;
 
 namespace ValPlay.Platforms.Android;
 
 public static class AndroidMediaSessionHelper
 {
-    public static int GetAudioSessionId(CommunityToolkit.Maui.Views.MediaElement mediaElement)
+    public static int GetAudioSessionId(MediaElement mediaElement)
     {
         try
         {
@@ -13,19 +15,43 @@ public static class AndroidMediaSessionHelper
             if (platformView is null)
                 return 0;
 
-            var playerProperty = platformView.GetType().GetProperty("Player");
-            var player = playerProperty?.GetValue(platformView);
-            if (player is null)
-                return 0;
+            if (platformView is PlayerView playerView)
+                return ReadSessionId(playerView.Player);
 
-            var sessionProperty = player.GetType().GetProperty("AudioSessionId");
-            if (sessionProperty?.GetValue(player) is int sessionId)
-                return sessionId;
+            var playerViewProperty = platformView.GetType().GetProperty("PlayerView");
+            if (playerViewProperty?.GetValue(platformView) is PlayerView nestedPlayerView)
+                return ReadSessionId(nestedPlayerView.Player);
+
+            var playerProperty = platformView.GetType().GetProperty("Player");
+            if (playerProperty?.GetValue(platformView) is IPlayer player)
+                return ReadSessionId(player);
+
+            foreach (var property in platformView.GetType().GetProperties())
+            {
+                if (property.GetValue(platformView) is not IPlayer nestedPlayer)
+                    continue;
+
+                var sessionId = ReadSessionId(nestedPlayer);
+                if (sessionId > 0)
+                    return sessionId;
+            }
         }
         catch
         {
             // ignored
         }
+
+        return 0;
+    }
+
+    private static int ReadSessionId(IPlayer? player)
+    {
+        if (player is null)
+            return 0;
+
+        var property = player.GetType().GetProperty("AudioSessionId");
+        if (property?.GetValue(player) is int sessionId)
+            return sessionId;
 
         return 0;
     }

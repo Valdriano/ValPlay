@@ -44,21 +44,34 @@ public sealed class AudioVisualizationDrawable : IDrawable
     canvas.RestoreState();
   }
 
+  private static bool HasActiveSpectrum(float[]? bands)
+  {
+    if (bands is not { Length: > 0 })
+      return false;
+
+    for (var i = 0; i < bands.Length; i++)
+    {
+      if (bands[i] > 0.12f)
+        return true;
+    }
+
+    return false;
+  }
+
   private void DrawBars(ICanvas canvas, RectF rect, double phase)
   {
     const int barCount = 22;
     var slot = rect.Width / barCount;
     var barWidth = slot * 0.55f;
-    var hasBands = Bands is { Length: > 0 };
+    var useSpectrum = HasActiveSpectrum(Bands) && IsPlaying;
 
     for (var i = 0; i < barCount; i++)
     {
       float energy;
-      if (hasBands && IsPlaying)
+      if (useSpectrum)
       {
         var index = i * Bands!.Length / barCount;
-        energy = Bands[index];
-        energy = 0.12f + energy * 0.88f;
+        energy = 0.1f + Bands[index] * 0.9f;
       }
       else
       {
@@ -95,7 +108,7 @@ public sealed class AudioVisualizationDrawable : IDrawable
     var path = new PathF();
     var midY = rect.Top + rect.Height / 2f;
     var step = Math.Max(2f, rect.Width / 120f);
-    var hasBands = Bands is { Length: > 0 };
+    var hasBands = HasActiveSpectrum(Bands) && IsPlaying;
 
     for (var x = rect.Left; x <= rect.Right; x += step)
     {
@@ -133,7 +146,7 @@ public sealed class AudioVisualizationDrawable : IDrawable
         (0.62, 0.52, 0.12, 1.5, 20)
       };
 
-    var hasBands = Bands is { Length: > 0 };
+    var hasBands = HasActiveSpectrum(Bands) && IsPlaying;
 
     foreach (var (xRatio, yRatio, sizeRatio, speed, bandIndex) in orbs)
     {

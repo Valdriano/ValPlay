@@ -131,9 +131,12 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty]
     private VisualizationMode _visualizationMode;
 
-    private readonly float[] _audioBands = new float[22];
+    private float[] _audioBands = new float[22];
 
     public float[] AudioBands => _audioBands;
+
+    [ObservableProperty]
+    private int _audioBandsVersion;
 
     [ObservableProperty]
     private string? _mediaPath;
@@ -216,8 +219,11 @@ public partial class PlayerViewModel : ObservableObject
         if (bands.Length == 0)
             return;
 
-        var count = Math.Min(bands.Length, _audioBands.Length);
-        Array.Copy(bands, _audioBands, count);
+        if (_audioBands.Length != bands.Length)
+            _audioBands = new float[bands.Length];
+
+        Array.Copy(bands, _audioBands, bands.Length);
+        AudioBandsVersion++;
         OnPropertyChanged(nameof(AudioBands));
     }
 

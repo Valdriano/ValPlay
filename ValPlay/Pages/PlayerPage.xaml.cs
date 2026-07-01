@@ -19,6 +19,7 @@ public partial class PlayerPage : ContentPage
     private readonly IAudioVisualizerService _visualizer;
     private bool _isSeeking;
     private bool _shouldResumeAfterFocusGain;
+    private CancellationTokenSource? _attachEffectsCts;
 
     public PlayerPage(
         PlayerViewModel viewModel,
@@ -59,12 +60,13 @@ public partial class PlayerPage : ContentPage
         _viewModel.ReloadSettings();
         SyncMediaElement();
         ApplyChromeMode();
-        AttachAudioEffects();
+        _ = AttachAudioEffectsWithRetryAsync();
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        _attachEffectsCts?.Cancel();
         _viewModel.ExitVisualizationFullscreen();
         if (_viewModel.IsVideo)
             _viewModel.ExitFullscreen();
@@ -164,7 +166,7 @@ public partial class PlayerPage : ContentPage
 
     private void OnMediaOpened(object? sender, EventArgs e)
     {
-        AttachAudioEffects();
+        _ = AttachAudioEffectsWithRetryAsync();
 
         if (_viewModel.ShouldResumeFromSavedPosition)
             MediaPlayer.SeekTo(TimeSpan.FromSeconds(_viewModel.SavedPositionSeconds));
@@ -173,15 +175,24 @@ public partial class PlayerPage : ContentPage
             TryPlay();
     }
 
-    private void AttachAudioEffects()
+    private async Task AttachAudioEffectsWithRetryAsync()
     {
 #if ANDROID
-        var sessionId = AndroidMediaSessionHelper.GetAudioSessionId(MediaPlayer);
-        if (sessionId <= 0)
-            return;
+        _attachEffectsCts?.Cancel();
+        _attachEffectsCts = new CancellationTokenSource();
+        var token = _attachEffectsCts.Token;
 
-        _equalizer.AttachToSession(sessionId);
-        _visualizer.AttachToSession(sessionId);
+        for (var attempt = 0; attempt < 15 && !token.IsCancellationRequested; attempt++)
+        {
+            var sessionId = AndroidMediaSessionHelper.GetAudioSessionId(MediaPlayer);
+            _equalizer.AttachToSession(sessionId);
+            _visualizer.AttachToSession(sessionId);
+
+            if (sessionId > 0 || attempt >= 6)
+                break;
+
+            await Task.Delay(150, token);
+        }
 #endif
     }
 
@@ -203,7 +214,7 @@ public partial class PlayerPage : ContentPage
     {
         if (e.NewState == MediaElementState.Playing)
         {
-            AttachAudioEffects();
+            _ = AttachAudioEffectsWithRetryAsync();
             _viewModel.OnPlaybackStarted();
             _carNotification.ShowPlaybackNotification(_viewModel.Title);
         }

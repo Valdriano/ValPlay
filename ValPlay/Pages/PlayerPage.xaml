@@ -65,6 +65,7 @@
                         <controls:AudioVisualizationView IsPlaying="{Binding IsPlaying}"
                                                          Mode="{Binding VisualizationMode}"
                                                          Bands="{Binding AudioBands}"
+                                                         BandsVersion="{Binding AudioBandsVersion}"
                                                          IsVisible="{Binding ShowVisualization}" />
                         <Image Source="{Binding AlbumArt}"
                                Aspect="AspectFill"
@@ -313,7 +314,8 @@
                   BackgroundColor="#0D1117">
                 <controls:AudioVisualizationView IsPlaying="{Binding IsPlaying}"
                                                  Mode="{Binding VisualizationMode}"
-                                                 Bands="{Binding AudioBands}" />
+                                                 Bands="{Binding AudioBands}"
+                                                 BandsVersion="{Binding AudioBandsVersion}" />
                 <Grid RowDefinitions="Auto,*" Padding="12">
                     <Button Text="{Binding VisualizationFullscreenIcon}"
                             Command="{Binding ToggleVisualizationFullscreenCommand}"
