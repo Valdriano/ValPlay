@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ValPlay.Helpers;
 using ValPlay.Models;
 using ValPlay.Services;
 
@@ -11,28 +12,43 @@ public partial class LibraryViewModel : ObservableObject
     private readonly IMediaLibraryService _mediaLibraryService;
     private readonly IPlaybackService _playbackService;
     private readonly ISettingsService _settingsService;
+    private readonly ILocalizationService _localization;
 
     public LibraryViewModel(
         IMediaLibraryService mediaLibraryService,
         IPlaybackService playbackService,
-        ISettingsService settingsService)
+        ISettingsService settingsService,
+        ILocalizationService localization)
     {
         _mediaLibraryService = mediaLibraryService;
         _playbackService = playbackService;
         _settingsService = settingsService;
+        _localization = localization;
 
         _mediaLibraryService.LibraryChanged += (_, _) => RefreshView();
+        _localization.LanguageChanged += (_, _) =>
+        {
+            OnPropertyChanged(string.Empty);
+            RefreshView();
+        };
 
         ScanRoots = new ObservableCollection<string>(_mediaLibraryService.GetDefaultScanRoots());
         if (ScanRoots.Count > 0)
             SelectedScanRoot = _settingsService.Current.LastScanRootPath ?? ScanRoots[0];
 
+        StatusMessage = _localization.GetString("Library_Status_Ready");
         RefreshView();
     }
 
     public ObservableCollection<LibraryRow> Rows { get; } = [];
 
     public ObservableCollection<string> ScanRoots { get; }
+
+    public string PageTitle => _localization.GetString("Library_Title");
+    public string SearchPlaceholder => _localization.GetString("Library_SearchPlaceholder");
+    public string ScanFolderTitle => _localization.GetString("Library_ScanFolderTitle");
+    public string RefreshLabel => _localization.GetString("Library_Refresh");
+    public string EmptyHint => _localization.GetString("Library_EmptyHint");
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -41,7 +57,7 @@ public partial class LibraryViewModel : ObservableObject
     private bool _isScanning;
 
     [ObservableProperty]
-    private string _statusMessage = "Pronto para buscar mídias";
+    private string _statusMessage;
 
     [ObservableProperty]
     private string? _selectedScanRoot;
@@ -66,14 +82,14 @@ public partial class LibraryViewModel : ObservableObject
     private async Task ScanAsync()
     {
         IsScanning = true;
-        StatusMessage = "Buscando arquivos...";
+        StatusMessage = _localization.GetString("Library_Status_Scanning");
 
         try
         {
             var granted = await _mediaLibraryService.RequestPermissionsAsync();
             if (!granted)
             {
-                StatusMessage = "Permissão de armazenamento negada";
+                StatusMessage = _localization.GetString("Library_Status_PermissionDenied");
                 return;
             }
 
@@ -83,7 +99,7 @@ public partial class LibraryViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Erro ao buscar: {ex.Message}";
+            StatusMessage = _localization.GetString("Library_Status_ScanError", ex.Message);
         }
         finally
         {
@@ -188,12 +204,12 @@ public partial class LibraryViewModel : ObservableObject
                 item.FileName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
             foreach (var item in query)
-                Rows.Add(LibraryRow.FromMedia(item));
+                Rows.Add(LibraryRow.FromMedia(item, _localization));
 
             if (!IsScanning)
                 StatusMessage = Rows.Count == 0
-                    ? "Nenhum resultado na busca"
-                    : $"{Rows.Count} resultado(s)";
+                    ? _localization.GetString("Library_Status_NoSearchResults")
+                    : _localization.GetString("Library_Status_SearchResults", Rows.Count);
             return;
         }
 
@@ -202,10 +218,10 @@ public partial class LibraryViewModel : ObservableObject
             BrowsePath = currentPath;
 
         foreach (var folder in _mediaLibraryService.GetSubfolders(currentPath))
-            Rows.Add(LibraryRow.FromFolder(folder));
+            Rows.Add(LibraryRow.FromFolder(folder, _localization));
 
         foreach (var item in _mediaLibraryService.GetItemsInFolder(currentPath))
-            Rows.Add(LibraryRow.FromMedia(item));
+            Rows.Add(LibraryRow.FromMedia(item, _localization));
 
         UpdateNavigationState();
 
@@ -214,8 +230,8 @@ public partial class LibraryViewModel : ObservableObject
             var folderCount = Rows.Count(r => r.Kind == LibraryEntryKind.Folder);
             var fileCount = Rows.Count(r => r.Kind == LibraryEntryKind.Media);
             StatusMessage = Rows.Count == 0
-                ? "Nenhuma mídia nesta pasta. Toque em Atualizar."
-                : $"{folderCount} pasta(s), {fileCount} arquivo(s)";
+                ? _localization.GetString("Library_Status_EmptyFolder")
+                : _localization.GetString("Library_Status_FolderSummary", folderCount, fileCount);
         }
     }
 

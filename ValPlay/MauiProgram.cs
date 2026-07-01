@@ -23,6 +23,7 @@ public static class MauiProgram
             });
 
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
+        builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
         builder.Services.AddSingleton<IMediaLibraryService, MediaLibraryService>();
         builder.Services.AddSingleton<IMediaMetadataService, MediaMetadataService>();
         builder.Services.AddSingleton<IPlaybackService, PlaybackService>();

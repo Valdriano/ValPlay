@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ValPlay.Services;
 
 namespace ValPlay.ViewModels;
 
@@ -9,14 +10,23 @@ public partial class AboutViewModel : ObservableObject
     private const int TapResetMilliseconds = 2500;
     private const string SecretUrl = "https://www.vw.com.br";
 
+    private readonly ILocalizationService _localization;
     private int _logoTapCount;
     private DateTime _lastLogoTap;
 
-    public AboutViewModel()
+    public AboutViewModel(ILocalizationService localization)
     {
+        _localization = localization;
+        _localization.LanguageChanged += (_, _) => OnPropertyChanged(string.Empty);
+
         AppVersion = AppInfo.Current.VersionString;
         BuildLabel = GetBuildDateLabel();
     }
+
+    public string PageTitle => _localization.GetString("About_Title");
+    public string VersionLabel => _localization.GetString("About_Version");
+    public string BuildDateLabel => _localization.GetString("About_BuildDate");
+    public string Description => _localization.GetString("About_Description");
 
     [ObservableProperty]
     private string _appVersion = "1.0";

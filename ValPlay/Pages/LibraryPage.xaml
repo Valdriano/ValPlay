@@ -7,7 +7,7 @@
              xmlns:conv="clr-namespace:ValPlay.Converters"
              x:Class="ValPlay.Pages.LibraryPage"
              x:DataType="vm:LibraryViewModel"
-             Title="Biblioteca"
+             Title="{Binding PageTitle}"
              BackgroundColor="{StaticResource AppBackground}">
 
     <ContentPage.Resources>
@@ -19,17 +19,17 @@
     <controls:VwSafeAreaLayout>
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Padding="12" RowSpacing="10">
 
-            <SearchBar Placeholder="Buscar música ou vídeo..."
+            <SearchBar Placeholder="{Binding SearchPlaceholder}"
                        Text="{Binding SearchText}"
                        Style="{StaticResource VwSearchBar}" />
 
             <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <Picker Title="Pasta para buscar"
+                <Picker Title="{Binding ScanFolderTitle}"
                         ItemsSource="{Binding ScanRoots}"
                         SelectedItem="{Binding SelectedScanRoot}"
                         Style="{StaticResource VwPicker}" />
                 <Button Grid.Column="1"
-                        Text="Atualizar"
+                        Text="{Binding RefreshLabel}"
                         Command="{Binding ScanCommand}"
                         IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
                         Style="{StaticResource VwPrimaryButton}"
@@ -70,7 +70,7 @@
                 <CollectionView.EmptyView>
                     <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8">
                         <Label Text="📂" FontSize="48" HorizontalOptions="Center" />
-                        <Label Text="Conecte um pendrive ou cartão SD e toque em Atualizar"
+                        <Label Text="{Binding EmptyHint}"
                                Style="{StaticResource VwSubtitle}"
                                HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>

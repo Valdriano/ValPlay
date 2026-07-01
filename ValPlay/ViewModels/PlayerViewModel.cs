@@ -1,6 +1,6 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ValPlay.Helpers;
 using ValPlay.Models;
 using ValPlay.Services;
 
@@ -11,28 +11,41 @@ public partial class PlayerViewModel : ObservableObject
     private readonly IPlaybackService _playbackService;
     private readonly ISettingsService _settingsService;
     private readonly IMediaMetadataService _metadataService;
+    private readonly ILocalizationService _localization;
     private CancellationTokenSource? _albumArtCts;
 
     public PlayerViewModel(
         IPlaybackService playbackService,
         ISettingsService settingsService,
-        IMediaMetadataService metadataService)
+        IMediaMetadataService metadataService,
+        ILocalizationService localization)
     {
         _playbackService = playbackService;
         _settingsService = settingsService;
         _metadataService = metadataService;
+        _localization = localization;
 
         _playbackService.StateChanged += (_, _) => RefreshFromService();
         _playbackService.MediaChanged += (_, media) => OnMediaChanged(media);
+        _localization.LanguageChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(PageTitle));
+            RefreshFromService();
+            if (!HasMedia)
+                ApplyEmptyState();
+        };
 
+        ApplyEmptyState();
         RefreshFromService();
     }
 
-    [ObservableProperty]
-    private string _title = "Nenhuma mídia";
+    public string PageTitle => _localization.GetString("Player_Title");
 
     [ObservableProperty]
-    private string _subtitle = "Selecione um arquivo na biblioteca";
+    private string _title = string.Empty;
+
+    [ObservableProperty]
+    private string _subtitle = string.Empty;
 
     [ObservableProperty]
     private string _artist = "—";
@@ -44,10 +57,10 @@ public partial class PlayerViewModel : ObservableObject
     private string _year = "—";
 
     [ObservableProperty]
-    private string _yearLabel = "Ano: —";
+    private string _yearLabel = string.Empty;
 
     [ObservableProperty]
-    private string _durationLabel = "Duração: 00:00";
+    private string _durationLabel = string.Empty;
 
     [ObservableProperty]
     private bool _isPlaying;
@@ -191,14 +204,7 @@ public partial class PlayerViewModel : ObservableObject
         {
             HasMedia = false;
             MediaPath = null;
-            Title = "Nenhuma mídia";
-            Subtitle = "Selecione um arquivo na biblioteca";
-            Artist = "—";
-            Album = "—";
-            Year = "—";
-            YearLabel = "Ano: —";
-            DurationLabel = "Duração: 00:00";
-            TrackDuration = TimeSpan.Zero;
+            ApplyEmptyState();
             AlbumArt = null;
             IsVideo = false;
             ExitFullscreen();
@@ -221,6 +227,18 @@ public partial class PlayerViewModel : ObservableObject
         SavedPositionSeconds = settings.LastPositionSeconds;
     }
 
+    private void ApplyEmptyState()
+    {
+        Title = _localization.GetString("Player_NoMedia");
+        Subtitle = _localization.GetString("Player_SelectFile");
+        Artist = "—";
+        Album = "—";
+        Year = "—";
+        YearLabel = _localization.GetString("Player_YearEmpty");
+        TrackDuration = TimeSpan.Zero;
+        DurationLabel = _localization.GetString("Player_DurationFormat", FormatDuration(TimeSpan.Zero));
+    }
+
     private async Task LoadAlbumArtAsync(string path, CancellationToken cancellationToken)
     {
         var art = await _metadataService.LoadAlbumArtAsync(path, cancellationToken);
@@ -233,21 +251,27 @@ public partial class PlayerViewModel : ObservableObject
     private void ApplyMediaMetadata(MediaItem media)
     {
         Title = media.DisplayTitle;
-        Subtitle = media.DisplaySubtitle;
-        Artist = string.IsNullOrWhiteSpace(media.Artist) ? "Artista desconhecido" : media.Artist;
-        Album = string.IsNullOrWhiteSpace(media.Album) ? "Álbum desconhecido" : media.Album;
+        Subtitle = media.GetLocalizedSubtitle(_localization);
+        Artist = string.IsNullOrWhiteSpace(media.Artist)
+            ? _localization.GetString("Player_UnknownArtist")
+            : media.Artist;
+        Album = string.IsNullOrWhiteSpace(media.Album)
+            ? _localization.GetString("Player_UnknownAlbum")
+            : media.Album;
         Year = media.Year is > 0 ? media.Year.Value.ToString() : "—";
-        YearLabel = media.Year is > 0 ? $"Ano: {media.Year.Value}" : "Ano: —";
+        YearLabel = media.Year is > 0
+            ? _localization.GetString("Player_YearFormat", media.Year.Value)
+            : _localization.GetString("Player_YearEmpty");
         TrackDuration = media.Duration ?? TimeSpan.Zero;
-        DurationLabel = $"Duração: {FormatDuration(TrackDuration)}";
+        DurationLabel = _localization.GetString("Player_DurationFormat", FormatDuration(TrackDuration));
     }
 
-    private static string FormatDuration(TimeSpan duration)
+    private string FormatDuration(TimeSpan duration)
     {
         if (duration.TotalHours >= 1)
-            return duration.ToString(@"h\:mm\:ss");
+            return duration.ToString(@"h\:mm\:ss", _localization.CurrentCulture);
 
-        return duration.ToString(@"m\:ss");
+        return duration.ToString(@"m\:ss", _localization.CurrentCulture);
     }
 
     private void RefreshFromService()
@@ -264,6 +288,10 @@ public partial class PlayerViewModel : ObservableObject
         {
             ApplyMediaMetadata(media);
             IsVideo = media.Type == MediaType.Video;
+        }
+        else
+        {
+            ApplyEmptyState();
         }
     }
 

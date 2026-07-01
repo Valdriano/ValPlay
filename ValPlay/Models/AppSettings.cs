@@ -10,4 +10,5 @@ public sealed class AppSettings
     public string? LastScanRootPath { get; set; }
     public bool ShowVideoOnly { get; set; }
     public bool ShowAudioOnly { get; set; }
+    public string Language { get; set; } = "pt";
 }

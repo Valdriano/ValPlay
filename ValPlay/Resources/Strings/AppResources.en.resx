@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Tab_Library" xml:space="preserve"><value>Library</value></data>
+  <data name="Tab_Player" xml:space="preserve"><value>Player</value></data>
+  <data name="Tab_Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Tab_About" xml:space="preserve"><value>About</value></data>
+  <data name="Library_Title" xml:space="preserve"><value>Library</value></data>
+  <data name="Library_SearchPlaceholder" xml:space="preserve"><value>Search music or video...</value></data>
+  <data name="Library_ScanFolderTitle" xml:space="preserve"><value>Folder to scan</value></data>
+  <data name="Library_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Library_EmptyHint" xml:space="preserve"><value>Connect a USB drive or SD card and tap Refresh</value></data>
+  <data name="Library_Status_Ready" xml:space="preserve"><value>Ready to scan media</value></data>
+  <data name="Library_Status_Scanning" xml:space="preserve"><value>Scanning files...</value></data>
+  <data name="Library_Status_PermissionDenied" xml:space="preserve"><value>Storage permission denied</value></data>
+  <data name="Library_Status_ScanError" xml:space="preserve"><value>Scan error: {0}</value></data>
+  <data name="Library_Status_NoSearchResults" xml:space="preserve"><value>No search results</value></data>
+  <data name="Library_Status_SearchResults" xml:space="preserve"><value>{0} result(s)</value></data>
+  <data name="Library_Status_EmptyFolder" xml:space="preserve"><value>No media in this folder. Tap Refresh.</value></data>
+  <data name="Library_Status_FolderSummary" xml:space="preserve"><value>{0} folder(s), {1} file(s)</value></data>
+  <data name="Library_FolderFiles" xml:space="preserve"><value>{0} file(s)</value></data>
+  <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings_Playback" xml:space="preserve"><value>Playback</value></data>
+  <data name="Settings_Shuffle" xml:space="preserve"><value>Shuffle mode</value></data>
+  <data name="Settings_ShuffleHint" xml:space="preserve"><value>Stays enabled after turning off the car</value></data>
+  <data name="Settings_Repeat" xml:space="preserve"><value>Repeat</value></data>
+  <data name="Settings_Resume" xml:space="preserve"><value>Resume where you left off</value></data>
+  <data name="Settings_ResumeHint" xml:space="preserve"><value>When starting the car, continues the same track and position</value></data>
+  <data name="Settings_ClearSession" xml:space="preserve"><value>Clear saved session</value></data>
+  <data name="Settings_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Repeat_Off" xml:space="preserve"><value>Off</value></data>
+  <data name="Repeat_All" xml:space="preserve"><value>Repeat playlist</value></data>
+  <data name="Repeat_One" xml:space="preserve"><value>Repeat track</value></data>
+  <data name="About_Title" xml:space="preserve"><value>About</value></data>
+  <data name="About_Version" xml:space="preserve"><value>Version</value></data>
+  <data name="About_BuildDate" xml:space="preserve"><value>Build date</value></data>
+  <data name="About_Description" xml:space="preserve"><value>Media player for VW Play head unit</value></data>
+  <data name="Player_Title" xml:space="preserve"><value>Player</value></data>
+  <data name="Player_NoMedia" xml:space="preserve"><value>No media</value></data>
+  <data name="Player_SelectFile" xml:space="preserve"><value>Select a file from the library</value></data>
+  <data name="Player_UnknownArtist" xml:space="preserve"><value>Unknown artist</value></data>
+  <data name="Player_UnknownAlbum" xml:space="preserve"><value>Unknown album</value></data>
+  <data name="Player_YearFormat" xml:space="preserve"><value>Year: {0}</value></data>
+  <data name="Player_YearEmpty" xml:space="preserve"><value>Year: —</value></data>
+  <data name="Player_DurationFormat" xml:space="preserve"><value>Duration: {0}</value></data>
+  <data name="MediaType_Video" xml:space="preserve"><value>Video</value></data>
+  <data name="MediaType_Audio" xml:space="preserve"><value>Audio</value></data>
+</root>

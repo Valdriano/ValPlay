@@ -5,44 +5,67 @@ namespace ValPlay;
 
 public partial class AppShell : Shell
 {
+    private readonly ILocalizationService _localization;
+    private readonly ShellContent _libraryTab;
+    private readonly ShellContent _playerTab;
+    private readonly ShellContent _settingsTab;
+    private readonly ShellContent _aboutTab;
+
     public AppShell(
         LibraryPage libraryPage,
         PlayerPage playerPage,
         SettingsPage settingsPage,
         AboutPage aboutPage,
-        AppBootstrapper bootstrapper)
+        AppBootstrapper bootstrapper,
+        ILocalizationService localization)
     {
         InitializeComponent();
+        _localization = localization;
 
-        MainTabBar.Items.Add(new ShellContent
+        _libraryTab = new ShellContent
         {
-            Title = "Biblioteca",
+            Title = _localization.GetString("Tab_Library"),
             Content = libraryPage,
             Route = "LibraryPage"
-        });
+        };
 
-        MainTabBar.Items.Add(new ShellContent
+        _playerTab = new ShellContent
         {
-            Title = "Player",
+            Title = _localization.GetString("Tab_Player"),
             Content = playerPage,
             Route = "PlayerPage"
-        });
+        };
 
-        MainTabBar.Items.Add(new ShellContent
+        _settingsTab = new ShellContent
         {
-            Title = "Ajustes",
+            Title = _localization.GetString("Tab_Settings"),
             Content = settingsPage,
             Route = "SettingsPage"
-        });
+        };
 
-        MainTabBar.Items.Add(new ShellContent
+        _aboutTab = new ShellContent
         {
-            Title = "Sobre",
+            Title = _localization.GetString("Tab_About"),
             Content = aboutPage,
             Route = "AboutPage"
-        });
+        };
+
+        MainTabBar.Items.Add(_libraryTab);
+        MainTabBar.Items.Add(_playerTab);
+        MainTabBar.Items.Add(_settingsTab);
+        MainTabBar.Items.Add(_aboutTab);
+
+        _localization.LanguageChanged += (_, _) => UpdateTabTitles();
 
         _ = InitializeAppAsync(bootstrapper);
+    }
+
+    private void UpdateTabTitles()
+    {
+        _libraryTab.Title = _localization.GetString("Tab_Library");
+        _playerTab.Title = _localization.GetString("Tab_Player");
+        _settingsTab.Title = _localization.GetString("Tab_Settings");
+        _aboutTab.Title = _localization.GetString("Tab_About");
     }
 
     private static async Task InitializeAppAsync(AppBootstrapper bootstrapper)

@@ -6,7 +6,7 @@
              xmlns:controls="clr-namespace:ValPlay.Controls"
              x:Class="ValPlay.Pages.PlayerPage"
              x:DataType="vm:PlayerViewModel"
-             Title="Player"
+             Title="{Binding PageTitle}"
              BackgroundColor="{StaticResource AppBackground}">
 
     <controls:VwSafeAreaLayout x:Name="SafeArea">

@@ -5,7 +5,7 @@
              xmlns:controls="clr-namespace:ValPlay.Controls"
              x:Class="ValPlay.Pages.AboutPage"
              x:DataType="vm:AboutViewModel"
-             Title="Sobre"
+             Title="{Binding PageTitle}"
              BackgroundColor="{StaticResource AppBackground}">
 
     <controls:VwSafeAreaLayout>
@@ -36,7 +36,7 @@
                          Margin="0,8" />
 
                 <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                    <Label Text="Versão"
+                    <Label Text="{Binding VersionLabel}"
                            Style="{StaticResource VwCaption}"
                            HorizontalOptions="Center" />
                     <Label Text="{Binding AppVersion}"
@@ -46,7 +46,7 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                    <Label Text="Data da compilação"
+                    <Label Text="{Binding BuildDateLabel}"
                            Style="{StaticResource VwCaption}"
                            HorizontalOptions="Center" />
                     <Label Text="{Binding BuildLabel}"
@@ -55,7 +55,7 @@
                            HorizontalOptions="Center" />
                 </VerticalStackLayout>
 
-                <Label Text="Reprodutor de mídia para central VW Play"
+                <Label Text="{Binding Description}"
                        Style="{StaticResource VwCaption}"
                        HorizontalTextAlignment="Center"
                        Margin="0,16,0,0" />

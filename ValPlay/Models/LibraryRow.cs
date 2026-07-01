@@ -1,3 +1,6 @@
+using ValPlay.Helpers;
+using ValPlay.Services;
+
 namespace ValPlay.Models;
 
 public sealed class LibraryRow
@@ -8,19 +11,19 @@ public sealed class LibraryRow
     public required string Path { get; init; }
     public MediaItem? Media { get; init; }
 
-    public static LibraryRow FromFolder(MediaFolder folder) => new()
+    public static LibraryRow FromFolder(MediaFolder folder, ILocalizationService localization) => new()
     {
         Kind = LibraryEntryKind.Folder,
         Title = folder.Name,
-        Subtitle = $"{folder.ItemCount} arquivo(s)",
+        Subtitle = localization.GetString("Library_FolderFiles", folder.ItemCount),
         Path = folder.Path
     };
 
-    public static LibraryRow FromMedia(MediaItem media) => new()
+    public static LibraryRow FromMedia(MediaItem media, ILocalizationService localization) => new()
     {
         Kind = LibraryEntryKind.Media,
         Title = media.DisplayTitle,
-        Subtitle = media.DisplaySubtitle,
+        Subtitle = media.GetLocalizedSubtitle(localization),
         Path = media.Path,
         Media = media
     };

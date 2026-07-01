@@ -5,22 +5,31 @@
              xmlns:controls="clr-namespace:ValPlay.Controls"
              x:Class="ValPlay.Pages.SettingsPage"
              x:DataType="vm:SettingsViewModel"
-             Title="Configurações"
+             Title="{Binding PageTitle}"
              BackgroundColor="{StaticResource AppBackground}">
 
     <controls:VwSafeAreaLayout>
         <ScrollView>
             <VerticalStackLayout Padding="16" Spacing="16">
 
-                <Label Text="Reprodução"
+                <Label Text="{Binding LanguageTitle}"
+                       Style="{StaticResource VwTitle}" />
+
+                <Picker ItemsSource="{Binding Languages}"
+                        SelectedItem="{Binding SelectedLanguage}"
+                        Style="{StaticResource VwPicker}" />
+
+                <BoxView HeightRequest="1" Color="{StaticResource SurfaceLight}" />
+
+                <Label Text="{Binding PlaybackTitle}"
                        Style="{StaticResource VwTitle}" />
 
                 <Grid ColumnDefinitions="*,Auto" Padding="0,8">
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Modo aleatório"
+                        <Label Text="{Binding ShuffleTitle}"
                                FontSize="18"
                                TextColor="{StaticResource TextPrimary}" />
-                        <Label Text="Mantém ativo mesmo após desligar o carro"
+                        <Label Text="{Binding ShuffleHint}"
                                Style="{StaticResource VwCaption}" />
                     </VerticalStackLayout>
                     <Switch Grid.Column="1"
@@ -29,20 +38,21 @@
                 </Grid>
 
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="Repetir"
+                    <Label Text="{Binding RepeatTitle}"
                            FontSize="18"
                            TextColor="{StaticResource TextPrimary}" />
-                    <Picker ItemsSource="{Binding RepeatModes}"
-                            SelectedItem="{Binding RepeatMode}"
+                    <Picker ItemsSource="{Binding RepeatModeOptions}"
+                            SelectedItem="{Binding SelectedRepeatMode}"
+                            ItemDisplayBinding="{Binding Label}"
                             Style="{StaticResource VwPicker}" />
                 </VerticalStackLayout>
 
                 <Grid ColumnDefinitions="*,Auto" Padding="0,8">
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Retomar de onde parou"
+                        <Label Text="{Binding ResumeTitle}"
                                FontSize="18"
                                TextColor="{StaticResource TextPrimary}" />
-                        <Label Text="Ao ligar o carro, continua a mesma faixa e posição"
+                        <Label Text="{Binding ResumeHint}"
                                Style="{StaticResource VwCaption}" />
                     </VerticalStackLayout>
                     <Switch Grid.Column="1"
@@ -52,7 +62,7 @@
 
                 <BoxView HeightRequest="1" Color="{StaticResource SurfaceLight}" />
 
-                <Button Text="Limpar sessão salva"
+                <Button Text="{Binding ClearSessionLabel}"
                         Command="{Binding ClearSavedSessionCommand}"
                         Style="{StaticResource VwControlButton}" />
 

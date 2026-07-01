@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Tab_Library" xml:space="preserve"><value>Biblioteca</value></data>
+  <data name="Tab_Player" xml:space="preserve"><value>Reproductor</value></data>
+  <data name="Tab_Settings" xml:space="preserve"><value>Ajustes</value></data>
+  <data name="Tab_About" xml:space="preserve"><value>Acerca de</value></data>
+  <data name="Library_Title" xml:space="preserve"><value>Biblioteca</value></data>
+  <data name="Library_SearchPlaceholder" xml:space="preserve"><value>Buscar música o vídeo...</value></data>
+  <data name="Library_ScanFolderTitle" xml:space="preserve"><value>Carpeta para buscar</value></data>
+  <data name="Library_Refresh" xml:space="preserve"><value>Actualizar</value></data>
+  <data name="Library_EmptyHint" xml:space="preserve"><value>Conecte una memoria USB o tarjeta SD y toque Actualizar</value></data>
+  <data name="Library_Status_Ready" xml:space="preserve"><value>Listo para buscar medios</value></data>
+  <data name="Library_Status_Scanning" xml:space="preserve"><value>Buscando archivos...</value></data>
+  <data name="Library_Status_PermissionDenied" xml:space="preserve"><value>Permiso de almacenamiento denegado</value></data>
+  <data name="Library_Status_ScanError" xml:space="preserve"><value>Error al buscar: {0}</value></data>
+  <data name="Library_Status_NoSearchResults" xml:space="preserve"><value>Sin resultados en la búsqueda</value></data>
+  <data name="Library_Status_SearchResults" xml:space="preserve"><value>{0} resultado(s)</value></data>
+  <data name="Library_Status_EmptyFolder" xml:space="preserve"><value>No hay medios en esta carpeta. Toque Actualizar.</value></data>
+  <data name="Library_Status_FolderSummary" xml:space="preserve"><value>{0} carpeta(s), {1} archivo(s)</value></data>
+  <data name="Library_FolderFiles" xml:space="preserve"><value>{0} archivo(s)</value></data>
+  <data name="Settings_Title" xml:space="preserve"><value>Configuración</value></data>
+  <data name="Settings_Playback" xml:space="preserve"><value>Reproducción</value></data>
+  <data name="Settings_Shuffle" xml:space="preserve"><value>Modo aleatorio</value></data>
+  <data name="Settings_ShuffleHint" xml:space="preserve"><value>Se mantiene activo después de apagar el coche</value></data>
+  <data name="Settings_Repeat" xml:space="preserve"><value>Repetir</value></data>
+  <data name="Settings_Resume" xml:space="preserve"><value>Reanudar donde se quedó</value></data>
+  <data name="Settings_ResumeHint" xml:space="preserve"><value>Al encender el coche, continúa la misma pista y posición</value></data>
+  <data name="Settings_ClearSession" xml:space="preserve"><value>Borrar sesión guardada</value></data>
+  <data name="Settings_Language" xml:space="preserve"><value>Idioma</value></data>
+  <data name="Repeat_Off" xml:space="preserve"><value>Desactivado</value></data>
+  <data name="Repeat_All" xml:space="preserve"><value>Repetir lista</value></data>
+  <data name="Repeat_One" xml:space="preserve"><value>Repetir pista</value></data>
+  <data name="About_Title" xml:space="preserve"><value>Acerca de</value></data>
+  <data name="About_Version" xml:space="preserve"><value>Versión</value></data>
+  <data name="About_BuildDate" xml:space="preserve"><value>Fecha de compilación</value></data>
+  <data name="About_Description" xml:space="preserve"><value>Reproductor de medios para central VW Play</value></data>
+  <data name="Player_Title" xml:space="preserve"><value>Reproductor</value></data>
+  <data name="Player_NoMedia" xml:space="preserve"><value>Sin medios</value></data>
+  <data name="Player_SelectFile" xml:space="preserve"><value>Seleccione un archivo de la biblioteca</value></data>
+  <data name="Player_UnknownArtist" xml:space="preserve"><value>Artista desconocido</value></data>
+  <data name="Player_UnknownAlbum" xml:space="preserve"><value>Álbum desconocido</value></data>
+  <data name="Player_YearFormat" xml:space="preserve"><value>Año: {0}</value></data>
+  <data name="Player_YearEmpty" xml:space="preserve"><value>Año: —</value></data>
+  <data name="Player_DurationFormat" xml:space="preserve"><value>Duración: {0}</value></data>
+  <data name="MediaType_Video" xml:space="preserve"><value>Vídeo</value></data>
+  <data name="MediaType_Audio" xml:space="preserve"><value>Audio</value></data>
+</root>
