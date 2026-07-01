@@ -11,7 +11,7 @@ public sealed class AudioVisualizationDrawable : IDrawable
   private static readonly Color LabelColor = Color.FromArgb("#88F0F6FC");
 
   private const float MinDb = -48f;
-  private const float MaxDb = 0f;
+  private const float MaxDb = -12f;
   private static readonly float[] GridDb = [0f, -6f, -12f, -24f, -36f, -48f];
 
   public double Phase { get; set; }
@@ -83,9 +83,9 @@ public sealed class AudioVisualizationDrawable : IDrawable
 
     for (var i = 0; i < barCount; i++)
     {
-      var normalized = 0.03f;
+      var normalized = 0.02f;
       if (IsPlaying && Bands is { Length: > 0 })
-        normalized = Math.Clamp(Bands[Math.Min(i, Bands.Length - 1)], 0.03f, 1f);
+        normalized = Math.Clamp(Bands[Math.Min(i, Bands.Length - 1)], 0.02f, 0.85f);
 
       var db = NormalizedToDb(normalized);
       var height = MathF.Max(3f, DbToHeight(db, plot.Height));

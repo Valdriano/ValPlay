@@ -161,17 +161,18 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
         }
 
         if (framePeak > _peakEnvelope)
-            _peakEnvelope += (framePeak - _peakEnvelope) * 0.45f;
+            _peakEnvelope += (framePeak - _peakEnvelope) * 0.28f;
         else
-            _peakEnvelope += (framePeak - _peakEnvelope) * 0.08f;
+            _peakEnvelope += (framePeak - _peakEnvelope) * 0.06f;
 
-        var gain = MathF.Max(_peakEnvelope, 0.06f);
+        const float headroom = 2.6f;
+        var gain = MathF.Max(_peakEnvelope * headroom, 0.14f);
 
         for (var i = 0; i < BandCount; i++)
         {
             var normalized = Math.Clamp(_fftBands[i] / gain, 0f, 1f);
-            normalized = MathF.Pow(normalized, 0.82f);
-            _publishBuffer[i] = normalized;
+            normalized = MathF.Pow(normalized, 1.55f);
+            _publishBuffer[i] = normalized * 0.78f;
         }
 
         SmoothBands(_publishBuffer, _smoothed);
