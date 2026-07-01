@@ -150,11 +150,18 @@
                                     CommandParameter="{Binding .}" />
                             </Grid.GestureRecognizers>
 
-                            <CheckBox Grid.Column="0"
-                                      IsChecked="{Binding IsSelected}"
-                                      IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=IsSelectionMode}"
-                                      Color="{StaticResource Accent}"
-                                      VerticalOptions="Center" />
+                            <Label Grid.Column="0"
+                                   Text="{Binding IsSelected, Converter={StaticResource SelectionIconConverter}}"
+                                   FontSize="24"
+                                   TextColor="{StaticResource Accent}"
+                                   VerticalOptions="Center"
+                                   IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=IsSelectionMode}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=ToggleRowSelectionCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Label.GestureRecognizers>
+                            </Label>
 
                             <Label Grid.Column="1"
                                    Text="{Binding Kind, Converter={StaticResource FolderIconConverter}}"

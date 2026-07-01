@@ -18,6 +18,7 @@
             <conv:MediaTypeToIconConverter x:Key="MediaIconConverter" />
             <conv:BoolToFullscreenIconConverter x:Key="FullscreenIconConverter" />
             <conv:SelectionBackgroundConverter x:Key="SelectionBackgroundConverter" />
+            <conv:SelectionIconConverter x:Key="SelectionIconConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
