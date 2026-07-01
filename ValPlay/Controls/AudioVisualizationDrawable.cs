@@ -83,9 +83,12 @@ public sealed class AudioVisualizationDrawable : IDrawable
 
     for (var i = 0; i < barCount; i++)
     {
-      var normalized = 0.03f;
+      var normalized = 0.05f;
       if (IsPlaying && Bands is { Length: > 0 })
-        normalized = MathF.Max(0.03f, Bands[Math.Min(i, Bands.Length - 1)]);
+      {
+        normalized = Bands[Math.Min(i, Bands.Length - 1)];
+        normalized = 0.06f + MathF.Pow(MathF.Max(normalized, 0f), 0.75f) * 0.94f;
+      }
 
       var db = NormalizedToDb(normalized);
       var height = MathF.Max(3f, DbToHeight(db, plot.Height));

@@ -113,8 +113,13 @@ public partial class PlayerPage : ContentPage
         FullscreenButton.Margin = _viewModel.IsFullscreen ? new Thickness(16) : new Thickness(8);
     }
 
-    private void OnVisualizerBandsUpdated(object? sender, float[] bands) =>
-        MainThread.BeginInvokeOnMainThread(() => _viewModel.UpdateAudioBands(bands));
+    private void OnVisualizerBandsUpdated(object? sender, float[] bands)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            _viewModel.UpdateAudioBands(bands);
+        });
+    }
 
     private void OnAudioFocusChanged(object? sender, CarAudioFocusChange change)
     {

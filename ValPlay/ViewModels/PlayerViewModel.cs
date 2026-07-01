@@ -219,12 +219,11 @@ public partial class PlayerViewModel : ObservableObject
         if (bands.Length == 0)
             return;
 
-        if (_audioBands.Length != bands.Length)
-            _audioBands = new float[bands.Length];
-
+        _audioBands = new float[bands.Length];
         Array.Copy(bands, _audioBands, bands.Length);
         AudioBandsVersion++;
         OnPropertyChanged(nameof(AudioBands));
+        OnPropertyChanged(nameof(AudioBandsVersion));
     }
 
     public void ExitVisualizationFullscreen()
