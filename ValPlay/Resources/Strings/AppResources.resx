@@ -22,6 +22,11 @@
   <data name="Library_Status_EmptyFolder" xml:space="preserve"><value>Nenhuma mídia nesta pasta. Toque em Atualizar.</value></data>
   <data name="Library_Status_FolderSummary" xml:space="preserve"><value>{0} pasta(s), {1} arquivo(s)</value></data>
   <data name="Library_FolderFiles" xml:space="preserve"><value>{0} arquivo(s)</value></data>
+  <data name="Library_PlayAllAudio" xml:space="preserve"><value>Reproduzir todos os áudios</value></data>
+  <data name="Library_PlayAllVideo" xml:space="preserve"><value>Reproduzir todos os vídeos</value></data>
+  <data name="Library_PlayAllMedia" xml:space="preserve"><value>Reproduzir tudo</value></data>
+  <data name="Library_PlayFolder" xml:space="preserve"><value>Reproduzir pasta</value></data>
+  <data name="Library_PlayItem" xml:space="preserve"><value>Reproduzir</value></data>
   <data name="Settings_Title" xml:space="preserve"><value>Configurações</value></data>
   <data name="Settings_Playback" xml:space="preserve"><value>Reprodução</value></data>
   <data name="Settings_Shuffle" xml:space="preserve"><value>Modo aleatório</value></data>

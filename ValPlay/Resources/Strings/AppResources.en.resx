@@ -22,6 +22,11 @@
   <data name="Library_Status_EmptyFolder" xml:space="preserve"><value>No media in this folder. Tap Refresh.</value></data>
   <data name="Library_Status_FolderSummary" xml:space="preserve"><value>{0} folder(s), {1} file(s)</value></data>
   <data name="Library_FolderFiles" xml:space="preserve"><value>{0} file(s)</value></data>
+  <data name="Library_PlayAllAudio" xml:space="preserve"><value>Play all audio</value></data>
+  <data name="Library_PlayAllVideo" xml:space="preserve"><value>Play all video</value></data>
+  <data name="Library_PlayAllMedia" xml:space="preserve"><value>Play all media</value></data>
+  <data name="Library_PlayFolder" xml:space="preserve"><value>Play folder</value></data>
+  <data name="Library_PlayItem" xml:space="preserve"><value>Play</value></data>
   <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
   <data name="Settings_Playback" xml:space="preserve"><value>Playback</value></data>
   <data name="Settings_Shuffle" xml:space="preserve"><value>Shuffle mode</value></data>

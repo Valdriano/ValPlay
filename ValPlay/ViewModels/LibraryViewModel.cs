@@ -30,6 +30,7 @@ public partial class LibraryViewModel : ObservableObject
         {
             OnPropertyChanged(string.Empty);
             RefreshView();
+            NotifyQuickPlayState();
         };
 
         ScanRoots = new ObservableCollection<string>(_mediaLibraryService.GetDefaultScanRoots());
@@ -47,8 +48,20 @@ public partial class LibraryViewModel : ObservableObject
     public string PageTitle => _localization.GetString("Library_Title");
     public string SearchPlaceholder => _localization.GetString("Library_SearchPlaceholder");
     public string ScanFolderTitle => _localization.GetString("Library_ScanFolderTitle");
-    public string RefreshLabel => _localization.GetString("Library_Refresh");
+    public string RefreshLabel => $"🔄 {_localization.GetString("Library_Refresh")}";
     public string EmptyHint => _localization.GetString("Library_EmptyHint");
+    public string PlayAllAudioLabel => $"🎵 {_localization.GetString("Library_PlayAllAudio")}";
+    public string PlayAllVideoLabel => $"🎬 {_localization.GetString("Library_PlayAllVideo")}";
+    public string PlayAllMediaLabel => $"▶️ {_localization.GetString("Library_PlayAllMedia")}";
+    public string PlayFolderIcon => "📂▶";
+    public string PlayItemIcon => "▶";
+    public string BackLabel => "◀";
+
+    public bool CanPlayAllAudio => _mediaLibraryService.Items.Any(item => item.Type == MediaType.Audio);
+
+    public bool CanPlayAllVideo => _mediaLibraryService.Items.Any(item => item.Type == MediaType.Video);
+
+    public bool CanPlayAllMedia => _mediaLibraryService.Items.Count > 0;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -189,10 +202,44 @@ public partial class LibraryViewModel : ObservableObject
         await Shell.Current.GoToAsync("//PlayerPage");
     }
 
+    [RelayCommand(CanExecute = nameof(CanPlayAllAudio))]
+    private async Task PlayAllAudioAsync() =>
+        await PlayPlaylistAsync(_mediaLibraryService.Items.Where(item => item.Type == MediaType.Audio));
+
+    [RelayCommand(CanExecute = nameof(CanPlayAllVideo))]
+    private async Task PlayAllVideoAsync() =>
+        await PlayPlaylistAsync(_mediaLibraryService.Items.Where(item => item.Type == MediaType.Video));
+
+    [RelayCommand(CanExecute = nameof(CanPlayAllMedia))]
+    private async Task PlayAllMediaAsync() =>
+        await PlayPlaylistAsync(_mediaLibraryService.Items);
+
+    private async Task PlayPlaylistAsync(IEnumerable<MediaItem> items)
+    {
+        var playlist = items.ToList();
+        if (playlist.Count == 0)
+            return;
+
+        _playbackService.SetPlaylist(playlist, 0);
+        _playbackService.Play(playlist[0]);
+        await Shell.Current.GoToAsync("//PlayerPage");
+    }
+
+    private void NotifyQuickPlayState()
+    {
+        OnPropertyChanged(nameof(CanPlayAllAudio));
+        OnPropertyChanged(nameof(CanPlayAllVideo));
+        OnPropertyChanged(nameof(CanPlayAllMedia));
+        PlayAllAudioCommand.NotifyCanExecuteChanged();
+        PlayAllVideoCommand.NotifyCanExecuteChanged();
+        PlayAllMediaCommand.NotifyCanExecuteChanged();
+    }
+
     private void RefreshView()
     {
         IsScanning = _mediaLibraryService.IsScanning;
         Rows.Clear();
+        NotifyQuickPlayState();
 
         IsSearchMode = !string.IsNullOrWhiteSpace(SearchText);
 

@@ -22,6 +22,11 @@
   <data name="Library_Status_EmptyFolder" xml:space="preserve"><value>No hay medios en esta carpeta. Toque Actualizar.</value></data>
   <data name="Library_Status_FolderSummary" xml:space="preserve"><value>{0} carpeta(s), {1} archivo(s)</value></data>
   <data name="Library_FolderFiles" xml:space="preserve"><value>{0} archivo(s)</value></data>
+  <data name="Library_PlayAllAudio" xml:space="preserve"><value>Reproducir todos los audios</value></data>
+  <data name="Library_PlayAllVideo" xml:space="preserve"><value>Reproducir todos los videos</value></data>
+  <data name="Library_PlayAllMedia" xml:space="preserve"><value>Reproducir todo</value></data>
+  <data name="Library_PlayFolder" xml:space="preserve"><value>Reproducir carpeta</value></data>
+  <data name="Library_PlayItem" xml:space="preserve"><value>Reproducir</value></data>
   <data name="Settings_Title" xml:space="preserve"><value>Configuración</value></data>
   <data name="Settings_Playback" xml:space="preserve"><value>Reproducción</value></data>
   <data name="Settings_Shuffle" xml:space="preserve"><value>Modo aleatorio</value></data>

@@ -17,13 +17,31 @@
     </ContentPage.Resources>
 
     <controls:VwSafeAreaLayout>
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Padding="12" RowSpacing="10">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" Padding="12" RowSpacing="10">
 
-            <SearchBar Placeholder="{Binding SearchPlaceholder}"
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="*,*,*"
+                  ColumnSpacing="8"
+                  IsVisible="{Binding IsSearchMode, Converter={StaticResource InvertedBoolConverter}}">
+                <Button Text="{Binding PlayAllAudioLabel}"
+                        Command="{Binding PlayAllAudioCommand}"
+                        Style="{StaticResource VwQuickPlayButton}" />
+                <Button Grid.Column="1"
+                        Text="{Binding PlayAllVideoLabel}"
+                        Command="{Binding PlayAllVideoCommand}"
+                        Style="{StaticResource VwQuickPlayButton}" />
+                <Button Grid.Column="2"
+                        Text="{Binding PlayAllMediaLabel}"
+                        Command="{Binding PlayAllMediaCommand}"
+                        Style="{StaticResource VwQuickPlayButton}" />
+            </Grid>
+
+            <SearchBar Grid.Row="1"
+                       Placeholder="{Binding SearchPlaceholder}"
                        Text="{Binding SearchText}"
                        Style="{StaticResource VwSearchBar}" />
 
-            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
                 <Picker Title="{Binding ScanFolderTitle}"
                         ItemsSource="{Binding ScanRoots}"
                         SelectedItem="{Binding SelectedScanRoot}"
@@ -33,17 +51,17 @@
                         Command="{Binding ScanCommand}"
                         IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
                         Style="{StaticResource VwPrimaryButton}"
-                        WidthRequest="140" />
+                        WidthRequest="150" />
             </Grid>
 
-            <Grid Grid.Row="2"
+            <Grid Grid.Row="3"
                   ColumnDefinitions="Auto,*,Auto"
                   ColumnSpacing="8"
                   IsVisible="{Binding IsSearchMode, Converter={StaticResource InvertedBoolConverter}}">
-                <Button Text="◀"
+                <Button Text="{Binding BackLabel}"
                         Command="{Binding GoBackCommand}"
                         IsEnabled="{Binding CanGoBack}"
-                        Style="{StaticResource VwControlButton}"
+                        Style="{StaticResource VwIconActionButton}"
                         WidthRequest="56"
                         FontSize="18" />
                 <Label Grid.Column="1"
@@ -54,17 +72,17 @@
                        LineBreakMode="TailTruncation" />
             </Grid>
 
-            <ActivityIndicator Grid.Row="3"
+            <ActivityIndicator Grid.Row="4"
                                IsRunning="{Binding IsScanning}"
                                IsVisible="{Binding IsScanning}"
                                Color="{StaticResource Accent}" />
 
-            <Label Grid.Row="3"
+            <Label Grid.Row="4"
                    Text="{Binding StatusMessage}"
                    Style="{StaticResource VwCaption}"
                    IsVisible="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}" />
 
-            <CollectionView Grid.Row="4"
+            <CollectionView Grid.Row="5"
                             ItemsSource="{Binding Rows}"
                             SelectionMode="None">
                 <CollectionView.EmptyView>
@@ -106,19 +124,19 @@
                             </VerticalStackLayout>
 
                             <Button Grid.Column="2"
-                                    Text="▶▶"
+                                    Text="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayFolderIcon}"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayFolderCommand}"
                                     CommandParameter="{Binding .}"
                                     IsVisible="{Binding Kind, Converter={StaticResource IsFolderConverter}}"
-                                    Style="{StaticResource VwControlButton}"
-                                    WidthRequest="56"
+                                    Style="{StaticResource VwIconActionButton}"
+                                    WidthRequest="64"
                                     HeightRequest="56"
-                                    FontSize="16"
+                                    FontSize="14"
                                     CornerRadius="28"
                                     VerticalOptions="Center" />
 
                             <Button Grid.Column="3"
-                                    Text="▶"
+                                    Text="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayItemIcon}"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayItemCommand}"
                                     CommandParameter="{Binding .}"
                                     IsVisible="{Binding Kind, Converter={StaticResource IsMediaConverter}}"
@@ -126,7 +144,7 @@
                                     WidthRequest="56"
                                     HeightRequest="56"
                                     CornerRadius="28"
-                                    FontSize="20"
+                                    FontSize="18"
                                     VerticalOptions="Center" />
                         </Grid>
                     </DataTemplate>
