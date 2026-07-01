@@ -187,12 +187,19 @@ public partial class PlayerPage : ContentPage
         _attachEffectsCts = new CancellationTokenSource();
         var token = _attachEffectsCts.Token;
 
+        if (!await AndroidVisualizerPermissionHelper.EnsureGrantedAsync())
+            return;
+
         for (var attempt = 0; attempt < 15 && !token.IsCancellationRequested; attempt++)
         {
-            var sessionId = AndroidMediaSessionHelper.GetAudioSessionId(MediaPlayer);
-            _equalizer.AttachToSession(sessionId);
-            _visualizer.AttachToSession(sessionId);
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                var sessionId = AndroidMediaSessionHelper.GetAudioSessionId(MediaPlayer);
+                _equalizer.AttachToSession(sessionId);
+                _visualizer.AttachToSession(sessionId);
+            });
 
+            var sessionId = AndroidMediaSessionHelper.GetAudioSessionId(MediaPlayer);
             if (sessionId > 0 || attempt >= 6)
                 break;
 

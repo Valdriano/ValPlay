@@ -1,13 +1,15 @@
 #if ANDROID
 using Android.Media.Audiofx;
+using Android.Util;
 using ValPlay.Services;
 
 namespace ValPlay.Platforms.Android;
 
 public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
 {
+    private const string Tag = "ValPlayVisualizer";
     private const int BandCount = 22;
-    private const int CaptureRateHz = 20_000;
+    private const int CaptureRateMilliHz = 20_000;
     private const float MinDb = -60f;
     private const float MaxDb = 0f;
     private const float MinHz = 50f;
@@ -20,35 +22,92 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
     private Visualizer? _visualizer;
     private int _attachedSessionId = -1;
     private int _silentFrames;
+    private readonly SemaphoreSlim _attachLock = new(1, 1);
+    private int _pendingSessionId = -1;
 
     public event EventHandler<float[]>? BandsUpdated;
 
     public void AttachToSession(int audioSessionId)
     {
-        var targetSession = audioSessionId > 0 ? audioSessionId : 0;
+        _pendingSessionId = audioSessionId;
+
+        if (!MainThread.IsMainThread)
+        {
+            MainThread.BeginInvokeOnMainThread(() => AttachToSession(audioSessionId));
+            return;
+        }
+
+        _ = AttachInternalAsync();
+    }
+
+    private async Task AttachInternalAsync()
+    {
+        var audioSessionId = _pendingSessionId;
+        await _attachLock.WaitAsync();
+        try
+        {
+            if (!await AndroidVisualizerPermissionHelper.EnsureGrantedAsync())
+            {
+                Log.Warn(Tag, "RECORD_AUDIO not granted; visualizer disabled.");
+                return;
+            }
+
+            var playerSession = audioSessionId > 0 ? audioSessionId : 0;
+            if (_visualizer is not null && _attachedSessionId == playerSession)
+                return;
+
+            TryAttach(playerSession);
+
+            if (_visualizer is null && playerSession != 0)
+                TryAttach(0);
+        }
+        finally
+        {
+            _attachLock.Release();
+        }
+    }
+
+    private void TryAttach(int targetSession)
+    {
         Detach();
 
         try
         {
-            var range = Visualizer.GetCaptureSizeRange()!;
+            var captureSize = GetPreferredCaptureSize();
             _visualizer = new Visualizer(targetSession);
-            _visualizer.SetCaptureSize(range[1]);
+            _visualizer.SetCaptureSize(captureSize);
             _visualizer.SetDataCaptureListener(
                 new AudioCaptureListener(OnWaveformCaptured, OnFftCaptured),
-                CaptureRateHz,
+                CaptureRateMilliHz,
                 true,
                 true);
             _visualizer.SetEnabled(true);
             _attachedSessionId = targetSession;
             _silentFrames = 0;
+            Log.Debug(Tag, $"Visualizer attached to session {targetSession}, captureSize={captureSize}.");
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Error(Tag, $"Visualizer attach failed for session {targetSession}: {ex.Message}");
             Detach();
-
-            if (targetSession != 0)
-                AttachToSession(0);
         }
+    }
+
+    private static int GetPreferredCaptureSize()
+    {
+        var range = Visualizer.GetCaptureSizeRange();
+        if (range is { Length: >= 2 })
+        {
+            for (var size = range[1]; size >= range[0]; size -= 128)
+            {
+                if (size is 512 or 1024 or 2048 or 4096)
+                    return size;
+            }
+
+            return range[1];
+        }
+
+        return 1024;
     }
 
     public void Detach()
@@ -62,9 +121,9 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
             _visualizer.SetDataCaptureListener(null!, 0, false, false);
             _visualizer.Release();
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            Log.Warn(Tag, $"Visualizer detach: {ex.Message}");
         }
         finally
         {
@@ -106,7 +165,7 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
             _silentFrames++;
             if (_silentFrames > 40 && _attachedSessionId != 0)
             {
-                AttachToSession(0);
+                TryAttach(0);
                 return;
             }
         }

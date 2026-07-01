@@ -50,8 +50,13 @@ public static class AndroidMediaSessionHelper
             return 0;
 
         var property = player.GetType().GetProperty("AudioSessionId");
-        if (property?.GetValue(player) is int sessionId)
+        if (property?.GetValue(player) is int sessionId && sessionId > 0)
             return sessionId;
+
+        var method = player.GetType().GetMethod("GetAudioSessionId", Type.EmptyTypes)
+            ?? player.GetType().GetMethod("getAudioSessionId", Type.EmptyTypes);
+        if (method?.Invoke(player, null) is int methodSessionId && methodSessionId > 0)
+            return methodSessionId;
 
         return 0;
     }
