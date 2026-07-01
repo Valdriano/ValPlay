@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ValPlay.ViewModels"
+             xmlns:controls="clr-namespace:ValPlay.Controls"
+             x:Class="ValPlay.Pages.FavoritesPage"
+             x:DataType="vm:FavoritesViewModel"
+             Title="{Binding PageTitle}"
+             BackgroundColor="{StaticResource AppBackground}">
+
+    <controls:VwSafeAreaLayout>
+        <Grid RowDefinitions="Auto,Auto,*" Padding="12" RowSpacing="10">
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding HasItems}">
+                <Button Text="{Binding PlayAllLabel}"
+                        Command="{Binding PlayAllCommand}"
+                        Style="{StaticResource VwPrimaryButton}" />
+                <Button Grid.Column="1"
+                        Text="{Binding ShuffleLabel}"
+                        Command="{Binding ShuffleAllCommand}"
+                        Style="{StaticResource VwQuickPlayButton}" />
+            </Grid>
+
+            <Label Grid.Row="1"
+                   Text="{Binding StatusMessage}"
+                   Style="{StaticResource VwCaption}" />
+
+            <CollectionView Grid.Row="2"
+                            ItemsSource="{Binding Items}"
+                            SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="12">
+                        <Label Text="❤️" FontSize="56" HorizontalOptions="Center" />
+                        <Label Text="{Binding EmptyHint}"
+                               Style="{StaticResource VwSubtitle}"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FavoriteRow">
+                        <Grid Padding="12,10"
+                              ColumnDefinitions="Auto,*,Auto,Auto"
+                              ColumnSpacing="10"
+                              BackgroundColor="{StaticResource Surface}">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FavoritesViewModel}}, Path=PlayItemCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Grid.GestureRecognizers>
+
+                            <Label Text="{Binding TypeIcon}"
+                                   FontSize="24"
+                                   VerticalOptions="Center" />
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{Binding Title}"
+                                       FontSize="18"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding Subtitle}"
+                                       Style="{StaticResource VwCaption}" />
+                            </VerticalStackLayout>
+
+                            <Button Grid.Column="2"
+                                    Text="▶"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FavoritesViewModel}}, Path=PlayItemCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Style="{StaticResource VwPlayButton}"
+                                    WidthRequest="52"
+                                    HeightRequest="52"
+                                    CornerRadius="26"
+                                    FontSize="18"
+                                    VerticalOptions="Center" />
+
+                            <Button Grid.Column="3"
+                                    Text="{Binding Source={RelativeSource AncestorType={x:Type vm:FavoritesViewModel}}, Path=RemoveIcon}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FavoritesViewModel}}, Path=RemoveItemCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Style="{StaticResource VwIconActionButton}"
+                                    WidthRequest="48"
+                                    HeightRequest="48"
+                                    FontSize="16"
+                                    VerticalOptions="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+    </controls:VwSafeAreaLayout>
+</ContentPage>

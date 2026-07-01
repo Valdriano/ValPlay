@@ -4,6 +4,9 @@ using ValPlay.Controls;
 using ValPlay.Helpers;
 using ValPlay.Services;
 using ValPlay.ViewModels;
+#if ANDROID
+using ValPlay.Platforms.Android;
+#endif
 
 namespace ValPlay.Pages;
 
@@ -12,18 +15,21 @@ public partial class PlayerPage : ContentPage
     private readonly PlayerViewModel _viewModel;
     private readonly ICarAudioService _carAudio;
     private readonly ICarNotificationService _carNotification;
+    private readonly IAudioEqualizerService _equalizer;
     private bool _isSeeking;
     private bool _shouldResumeAfterFocusGain;
 
     public PlayerPage(
         PlayerViewModel viewModel,
         ICarAudioService carAudio,
-        ICarNotificationService carNotification)
+        ICarNotificationService carNotification,
+        IAudioEqualizerService equalizer)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _carAudio = carAudio;
         _carNotification = carNotification;
+        _equalizer = equalizer;
         BindingContext = _viewModel;
 
         _carAudio.FocusChanged += OnAudioFocusChanged;
@@ -55,6 +61,7 @@ public partial class PlayerPage : ContentPage
         base.OnDisappearing();
         _viewModel.ExitFullscreen();
         ApplyFullscreenMode(false);
+        _equalizer.Detach();
 
         if (MediaPlayer.CurrentState == MediaElementState.Playing)
             MediaPlayer.Pause();
@@ -139,11 +146,22 @@ public partial class PlayerPage : ContentPage
 
     private void OnMediaOpened(object? sender, EventArgs e)
     {
+        AttachEqualizer();
+
         if (_viewModel.ShouldResumeFromSavedPosition)
             MediaPlayer.SeekTo(TimeSpan.FromSeconds(_viewModel.SavedPositionSeconds));
 
         if (_viewModel.IsPlaying)
             TryPlay();
+    }
+
+    private void AttachEqualizer()
+    {
+#if ANDROID
+        var sessionId = AndroidMediaSessionHelper.GetAudioSessionId(MediaPlayer);
+        if (sessionId > 0)
+            _equalizer.AttachToSession(sessionId);
+#endif
     }
 
     private void OnMediaEnded(object? sender, EventArgs e)
@@ -164,6 +182,7 @@ public partial class PlayerPage : ContentPage
     {
         if (e.NewState == MediaElementState.Playing)
         {
+            AttachEqualizer();
             _viewModel.OnPlaybackStarted();
             _carNotification.ShowPlaybackNotification(_viewModel.Title);
         }

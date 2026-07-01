@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ValPlay.ViewModels"
+             xmlns:controls="clr-namespace:ValPlay.Controls"
+             x:Class="ValPlay.Pages.EqualizerPage"
+             x:DataType="vm:EqualizerViewModel"
+             Title="{Binding PageTitle}"
+             BackgroundColor="{StaticResource AppBackground}">
+
+    <controls:VwSafeAreaLayout>
+        <ScrollView>
+            <VerticalStackLayout Padding="20" Spacing="16">
+
+                <Label Text="{Binding Description}"
+                       Style="{StaticResource VwSubtitle}"
+                       LineBreakMode="WordWrap" />
+
+                <Picker Title="{Binding PageTitle}"
+                        ItemsSource="{Binding Presets}"
+                        SelectedItem="{Binding SelectedPreset}"
+                        ItemDisplayBinding="{Binding Label}"
+                        Style="{StaticResource VwPicker}" />
+
+                <Button Text="{Binding CloseLabel}"
+                        Command="{Binding CloseCommand}"
+                        Style="{StaticResource VwPrimaryButton}"
+                        Margin="0,12,0,0" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </controls:VwSafeAreaLayout>
+</ContentPage>

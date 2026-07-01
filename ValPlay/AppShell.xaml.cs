@@ -7,12 +7,14 @@ public partial class AppShell : Shell
 {
     private readonly ILocalizationService _localization;
     private readonly ShellContent _libraryTab;
+    private readonly ShellContent _favoritesTab;
     private readonly ShellContent _playerTab;
     private readonly ShellContent _settingsTab;
     private readonly ShellContent _aboutTab;
 
     public AppShell(
         LibraryPage libraryPage,
+        FavoritesPage favoritesPage,
         PlayerPage playerPage,
         SettingsPage settingsPage,
         AboutPage aboutPage,
@@ -28,6 +30,14 @@ public partial class AppShell : Shell
             Icon = "tab_library",
             Content = libraryPage,
             Route = "LibraryPage"
+        };
+
+        _favoritesTab = new ShellContent
+        {
+            Title = _localization.GetString("Tab_Favorites"),
+            Icon = "tab_favorites",
+            Content = favoritesPage,
+            Route = "FavoritesPage"
         };
 
         _playerTab = new ShellContent
@@ -55,6 +65,7 @@ public partial class AppShell : Shell
         };
 
         MainTabBar.Items.Add(_libraryTab);
+        MainTabBar.Items.Add(_favoritesTab);
         MainTabBar.Items.Add(_playerTab);
         MainTabBar.Items.Add(_settingsTab);
         MainTabBar.Items.Add(_aboutTab);
@@ -67,6 +78,7 @@ public partial class AppShell : Shell
     private void UpdateTabTitles()
     {
         _libraryTab.Title = _localization.GetString("Tab_Library");
+        _favoritesTab.Title = _localization.GetString("Tab_Favorites");
         _playerTab.Title = _localization.GetString("Tab_Player");
         _settingsTab.Title = _localization.GetString("Tab_Settings");
         _aboutTab.Title = _localization.GetString("Tab_About");

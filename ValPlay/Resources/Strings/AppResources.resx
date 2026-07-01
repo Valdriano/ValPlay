@@ -59,4 +59,20 @@
   <data name="Player_DurationFormat" xml:space="preserve"><value>Duração: {0}</value></data>
   <data name="MediaType_Video" xml:space="preserve"><value>Vídeo</value></data>
   <data name="MediaType_Audio" xml:space="preserve"><value>Áudio</value></data>
+  <data name="Tab_Favorites" xml:space="preserve"><value>Favoritos</value></data>
+  <data name="Favorites_Title" xml:space="preserve"><value>Favoritos</value></data>
+  <data name="Favorites_Empty" xml:space="preserve"><value>Toque em 🤍 durante a reprodução para salvar suas músicas e vídeos favoritos</value></data>
+  <data name="Favorites_PlayAll" xml:space="preserve"><value>Reproduzir favoritos</value></data>
+  <data name="Favorites_Shuffle" xml:space="preserve"><value>Aleatório</value></data>
+  <data name="Favorites_Count" xml:space="preserve"><value>{0} favorito(s)</value></data>
+  <data name="Eq_Title" xml:space="preserve"><value>Equalizador</value></data>
+  <data name="Eq_Description" xml:space="preserve"><value>Escolha um preset de som para a reprodução de áudio</value></data>
+  <data name="Eq_Close" xml:space="preserve"><value>OK</value></data>
+  <data name="Eq_Off" xml:space="preserve"><value>Desligado</value></data>
+  <data name="Eq_Normal" xml:space="preserve"><value>Normal</value></data>
+  <data name="Eq_Bass" xml:space="preserve"><value>Graves</value></data>
+  <data name="Eq_Treble" xml:space="preserve"><value>Agudos</value></data>
+  <data name="Eq_Vocal" xml:space="preserve"><value>Voz</value></data>
+  <data name="Eq_Rock" xml:space="preserve"><value>Rock</value></data>
+  <data name="Eq_Pop" xml:space="preserve"><value>Pop</value></data>
 </root>

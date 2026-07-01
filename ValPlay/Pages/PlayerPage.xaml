@@ -80,6 +80,25 @@
                                          VerticalOptions="Center"
                                          HorizontalOptions="Center"
                                          MaximumWidthRequest="760">
+                        <Grid ColumnDefinitions="*,Auto,Auto"
+                              ColumnSpacing="8"
+                              IsVisible="{Binding ShowPlayerChrome}">
+                            <Button Grid.Column="1"
+                                    Text="{Binding FavoriteIcon}"
+                                    Command="{Binding ToggleFavoriteCommand}"
+                                    Style="{StaticResource VwIconActionButton}"
+                                    WidthRequest="52"
+                                    HeightRequest="52"
+                                    FontSize="22" />
+                            <Button Grid.Column="2"
+                                    Text="{Binding EqualizerIcon}"
+                                    Command="{Binding OpenEqualizerCommand}"
+                                    IsVisible="{Binding ShowEqualizer}"
+                                    Style="{StaticResource VwIconActionButton}"
+                                    WidthRequest="52"
+                                    HeightRequest="52"
+                                    FontSize="22" />
+                        </Grid>
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{Binding Title}"
                                    FontSize="28"
@@ -186,6 +205,23 @@
                                  IsVisible="{Binding IsVideo}">
                 <VerticalStackLayout IsVisible="{Binding ShowPlayerChrome}" Spacing="6">
                     <VerticalStackLayout IsVisible="{Binding HasMedia}" Spacing="6">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                            <Button Grid.Column="1"
+                                    Text="{Binding FavoriteIcon}"
+                                    Command="{Binding ToggleFavoriteCommand}"
+                                    Style="{StaticResource VwIconActionButton}"
+                                    WidthRequest="52"
+                                    HeightRequest="52"
+                                    FontSize="22" />
+                            <Button Grid.Column="2"
+                                    Text="{Binding EqualizerIcon}"
+                                    Command="{Binding OpenEqualizerCommand}"
+                                    IsVisible="{Binding ShowEqualizer}"
+                                    Style="{StaticResource VwIconActionButton}"
+                                    WidthRequest="52"
+                                    HeightRequest="52"
+                                    FontSize="22" />
+                        </Grid>
                         <Label Text="{Binding Title}"
                                Style="{StaticResource VwTitle}"
                                LineBreakMode="TailTruncation" />

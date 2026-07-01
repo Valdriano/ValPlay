@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using ValPlay.Helpers;
 using ValPlay.Models;
+using ValPlay.Pages;
 using ValPlay.Services;
 
 namespace ValPlay.ViewModels;
@@ -12,24 +14,31 @@ public partial class PlayerViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IMediaMetadataService _metadataService;
     private readonly ILocalizationService _localization;
+    private readonly IFavoritesService _favoritesService;
+    private readonly IServiceProvider _services;
     private CancellationTokenSource? _albumArtCts;
 
     public PlayerViewModel(
         IPlaybackService playbackService,
         ISettingsService settingsService,
         IMediaMetadataService metadataService,
-        ILocalizationService localization)
+        ILocalizationService localization,
+        IFavoritesService favoritesService,
+        IServiceProvider services)
     {
         _playbackService = playbackService;
         _settingsService = settingsService;
         _metadataService = metadataService;
         _localization = localization;
+        _favoritesService = favoritesService;
+        _services = services;
 
         _playbackService.StateChanged += (_, _) => RefreshFromService();
         _playbackService.MediaChanged += (_, media) => OnMediaChanged(media);
+        _favoritesService.FavoritesChanged += (_, _) => UpdateFavoriteState();
         _localization.LanguageChanged += (_, _) =>
         {
-            OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(string.Empty);
             RefreshFromService();
             if (!HasMedia)
                 ApplyEmptyState();
@@ -40,6 +49,9 @@ public partial class PlayerViewModel : ObservableObject
     }
 
     public string PageTitle => _localization.GetString("Player_Title");
+    public string FavoriteIcon => IsFavorite ? "❤️" : "🤍";
+    public string EqualizerIcon => "🎚️";
+    public bool ShowEqualizer => HasMedia && IsAudio;
 
     [ObservableProperty]
     private string _title = string.Empty;
@@ -95,6 +107,9 @@ public partial class PlayerViewModel : ObservableObject
     private bool _hasMedia;
 
     [ObservableProperty]
+    private bool _isFavorite;
+
+    [ObservableProperty]
     private string? _mediaPath;
 
     [ObservableProperty]
@@ -120,6 +135,22 @@ public partial class PlayerViewModel : ObservableObject
 
     [RelayCommand]
     private void CycleRepeat() => _playbackService.CycleRepeatMode();
+
+    [RelayCommand]
+    private void ToggleFavorite()
+    {
+        if (_playbackService.CurrentMedia is not { } media)
+            return;
+
+        IsFavorite = _favoritesService.Toggle(media);
+    }
+
+    [RelayCommand]
+    private async Task OpenEqualizerAsync()
+    {
+        var page = _services.GetRequiredService<EqualizerPage>();
+        await Shell.Current.Navigation.PushModalAsync(page);
+    }
 
     [RelayCommand]
     private void ToggleFullscreen()
@@ -149,13 +180,17 @@ public partial class PlayerViewModel : ObservableObject
 
         OnPropertyChanged(nameof(IsAudio));
         OnPropertyChanged(nameof(ShowAudioProgress));
+        OnPropertyChanged(nameof(ShowEqualizer));
     }
 
     partial void OnHasMediaChanged(bool value)
     {
         OnPropertyChanged(nameof(IsAudio));
         OnPropertyChanged(nameof(ShowAudioProgress));
+        OnPropertyChanged(nameof(ShowEqualizer));
     }
+
+    partial void OnIsFavoriteChanged(bool value) => OnPropertyChanged(nameof(FavoriteIcon));
 
     partial void OnAlbumArtChanged(ImageSource? value) =>
         OnPropertyChanged(nameof(HasAlbumArt));
@@ -206,6 +241,7 @@ public partial class PlayerViewModel : ObservableObject
             MediaPath = null;
             ApplyEmptyState();
             AlbumArt = null;
+            IsFavorite = false;
             IsVideo = false;
             ExitFullscreen();
             return;
@@ -216,6 +252,7 @@ public partial class PlayerViewModel : ObservableObject
         IsVideo = media.Type == MediaType.Video;
         MediaPath = media.Path;
         AlbumArt = null;
+        UpdateFavoriteState();
 
         if (!IsVideo)
             _ = LoadAlbumArtAsync(media.Path, token);
@@ -274,6 +311,12 @@ public partial class PlayerViewModel : ObservableObject
         return duration.ToString(@"m\:ss", _localization.CurrentCulture);
     }
 
+    private void UpdateFavoriteState()
+    {
+        var path = _playbackService.CurrentMedia?.Path ?? MediaPath;
+        IsFavorite = !string.IsNullOrWhiteSpace(path) && _favoritesService.IsFavorite(path);
+    }
+
     private void RefreshFromService()
     {
         IsPlaying = _playbackService.IsPlaying;
@@ -288,6 +331,7 @@ public partial class PlayerViewModel : ObservableObject
         {
             ApplyMediaMetadata(media);
             IsVideo = media.Type == MediaType.Video;
+            UpdateFavoriteState();
         }
         else
         {
