@@ -1,13 +1,18 @@
-using ValPlay.Pages;
+using Microsoft.Extensions.DependencyInjection;
+using ValPlay.Services;
 
 namespace ValPlay.Pages;
 
 public partial class SplashPage : ContentPage
 {
+    private readonly IServiceProvider _services;
+    private readonly AppBootstrapper _bootstrapper;
     private bool _animationStarted;
 
-    public SplashPage()
+    public SplashPage(IServiceProvider services, AppBootstrapper bootstrapper)
     {
+        _services = services;
+        _bootstrapper = bootstrapper;
         InitializeComponent();
     }
 
@@ -19,11 +24,13 @@ public partial class SplashPage : ContentPage
             return;
 
         _animationStarted = true;
-        _ = RunSplashAnimationAsync();
+        _ = RunSplashAsync();
     }
 
-    private async Task RunSplashAnimationAsync()
+    private async Task RunSplashAsync()
     {
+        _ = InitializeAppInBackgroundAsync();
+
         var fadeIn = new Animation(v => LogoImage.Opacity = v, 0, 1);
         var scaleIn = new Animation(v => LogoImage.Scale = v, 0.6, 1);
         var ringFade = new Animation(v => GlowRing.Opacity = v, 0, 1);
@@ -56,7 +63,37 @@ public partial class SplashPage : ContentPage
 
         await Task.Delay(250);
 
-        if (Navigation.ModalStack.Count > 0)
-            await Navigation.PopModalAsync();
+        var fadeOutTcs = new TaskCompletionSource();
+        new Animation(v => Opacity = v, 1, 0)
+            .Commit(this, "SplashOut", length: 300, easing: Easing.CubicIn, finished: (_, _) => fadeOutTcs.TrySetResult());
+        await fadeOutTcs.Task;
+
+        await NavigateToShellAsync();
+    }
+
+    private async Task InitializeAppInBackgroundAsync()
+    {
+        try
+        {
+            await _bootstrapper.InitializeAsync();
+        }
+        catch
+        {
+            // Falha silenciosa na inicialização para não bloquear a UI.
+        }
+    }
+
+    private async Task NavigateToShellAsync()
+    {
+        var window = Application.Current?.Windows.FirstOrDefault();
+        if (window is null)
+            return;
+
+        var shell = _services.GetRequiredService<AppShell>();
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            window.Page = shell;
+        });
     }
 }
