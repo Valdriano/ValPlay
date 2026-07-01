@@ -51,20 +51,22 @@ public partial class PlayerViewModel : ObservableObject
     }
 
     public string PageTitle => _localization.GetString("Player_Title");
-    public string FavoriteIcon => IsFavorite ? "❤️" : "🤍";
-    public string EqualizerIcon => "🎚️";
+    public string FavoriteIcon => IsFavorite ? "♥" : "♡";
+    public string EqualizerIcon => "🎚";
+    public string VisualizationFullscreenIcon => IsVisualizationFullscreen ? "✕" : "⛶";
     public bool ShowEqualizer => HasMedia && IsAudio;
-    public bool ShowVisualizationToggle => IsAudio;
+    public bool ShowVisualizationToggle => IsAudio && ShowPlayerChrome;
     public bool ShowVisualization => IsAudio && VisualizationMode != VisualizationMode.Off;
-    public bool ShowAlbumArtImage => IsAudio && HasAlbumArt && VisualizationMode == VisualizationMode.Off;
-    public bool ShowAlbumArtPlaceholder => IsAudio && !HasAlbumArt && VisualizationMode == VisualizationMode.Off;
+    public bool ShowVisualizationExpand => ShowVisualization && !IsVisualizationFullscreen && ShowPlayerChrome;
+    public bool ShowAlbumArtImage => IsAudio && HasAlbumArt && VisualizationMode == VisualizationMode.Off && !IsVisualizationFullscreen;
+    public bool ShowAlbumArtPlaceholder => IsAudio && !HasAlbumArt && VisualizationMode == VisualizationMode.Off && !IsVisualizationFullscreen;
 
     public string VisualizationIcon => VisualizationMode switch
     {
-        VisualizationMode.Bars => "📊",
-        VisualizationMode.Waves => "〰️",
-        VisualizationMode.Orbs => "✨",
-        _ => "🎨"
+        VisualizationMode.Bars => "▮",
+        VisualizationMode.Waves => "∿",
+        VisualizationMode.Orbs => "◎",
+        _ => "◉"
     };
 
     [ObservableProperty]
@@ -115,7 +117,10 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty]
     private bool _isFullscreen;
 
-    public bool ShowPlayerChrome => !IsFullscreen;
+    [ObservableProperty]
+    private bool _isVisualizationFullscreen;
+
+    public bool ShowPlayerChrome => !IsFullscreen && !IsVisualizationFullscreen;
 
     [ObservableProperty]
     private bool _hasMedia;
@@ -125,6 +130,10 @@ public partial class PlayerViewModel : ObservableObject
 
     [ObservableProperty]
     private VisualizationMode _visualizationMode;
+
+    private readonly float[] _audioBands = new float[22];
+
+    public float[] AudioBands => _audioBands;
 
     [ObservableProperty]
     private string? _mediaPath;
@@ -193,6 +202,31 @@ public partial class PlayerViewModel : ObservableObject
         IsFullscreen = !IsFullscreen;
     }
 
+    [RelayCommand]
+    private void ToggleVisualizationFullscreen()
+    {
+        if (!ShowVisualization && !IsVisualizationFullscreen)
+            return;
+
+        IsVisualizationFullscreen = !IsVisualizationFullscreen;
+    }
+
+    public void UpdateAudioBands(float[] bands)
+    {
+        if (bands.Length == 0)
+            return;
+
+        var count = Math.Min(bands.Length, _audioBands.Length);
+        Array.Copy(bands, _audioBands, count);
+        OnPropertyChanged(nameof(AudioBands));
+    }
+
+    public void ExitVisualizationFullscreen()
+    {
+        if (IsVisualizationFullscreen)
+            IsVisualizationFullscreen = false;
+    }
+
     public void ExitFullscreen()
     {
         if (IsFullscreen)
@@ -209,6 +243,15 @@ public partial class PlayerViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ShowPlayerChrome));
         OnPropertyChanged(nameof(ShowAudioProgress));
+        NotifyVisualizationProperties();
+    }
+
+    partial void OnIsVisualizationFullscreenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowPlayerChrome));
+        OnPropertyChanged(nameof(ShowAudioProgress));
+        OnPropertyChanged(nameof(VisualizationFullscreenIcon));
+        NotifyVisualizationProperties();
     }
 
     partial void OnVisualizationModeChanged(VisualizationMode value) => NotifyVisualizationProperties();
@@ -247,6 +290,7 @@ public partial class PlayerViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ShowVisualization));
         OnPropertyChanged(nameof(ShowVisualizationToggle));
+        OnPropertyChanged(nameof(ShowVisualizationExpand));
         OnPropertyChanged(nameof(ShowAlbumArtImage));
         OnPropertyChanged(nameof(ShowAlbumArtPlaceholder));
         OnPropertyChanged(nameof(VisualizationIcon));

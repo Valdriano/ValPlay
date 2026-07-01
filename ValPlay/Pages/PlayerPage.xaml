@@ -40,7 +40,6 @@
                         TextColor="White" />
             </Grid>
 
-            <!-- Áudio: capa | metadados + controles -->
             <Grid x:Name="AudioLayout"
                   Grid.Row="0"
                   IsVisible="{Binding IsAudio}"
@@ -56,7 +55,8 @@
                         WidthRequest="220"
                         HeightRequest="220"
                         VerticalOptions="Center"
-                        HorizontalOptions="Start">
+                        HorizontalOptions="Start"
+                        IsVisible="{Binding IsVisualizationFullscreen, Converter={StaticResource InvertedBoolConverter}}">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="12" />
                     </Border.StrokeShape>
@@ -64,15 +64,29 @@
                     <Grid>
                         <controls:AudioVisualizationView IsPlaying="{Binding IsPlaying}"
                                                          Mode="{Binding VisualizationMode}"
+                                                         Bands="{Binding AudioBands}"
                                                          IsVisible="{Binding ShowVisualization}" />
                         <Image Source="{Binding AlbumArt}"
                                Aspect="AspectFill"
                                IsVisible="{Binding ShowAlbumArtImage}" />
-                        <Label Text="🎵"
+                        <Label Text="♪"
                                FontSize="72"
+                               TextColor="{StaticResource Accent}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
                                IsVisible="{Binding ShowAlbumArtPlaceholder}" />
+                        <Button Text="⛶"
+                                Command="{Binding ToggleVisualizationFullscreenCommand}"
+                                IsVisible="{Binding ShowVisualizationExpand}"
+                                HorizontalOptions="End"
+                                VerticalOptions="End"
+                                Margin="6"
+                                WidthRequest="44"
+                                HeightRequest="44"
+                                CornerRadius="22"
+                                FontSize="18"
+                                BackgroundColor="#99000000"
+                                TextColor="White" />
                     </Grid>
                 </Border>
 
@@ -89,10 +103,11 @@
                             <Button Grid.Column="1"
                                     Text="{Binding FavoriteIcon}"
                                     Command="{Binding ToggleFavoriteCommand}"
+                                    TextColor="{Binding IsFavorite, Converter={StaticResource FavoriteColorConverter}}"
                                     Style="{StaticResource VwIconActionButton}"
                                     WidthRequest="52"
                                     HeightRequest="52"
-                                    FontSize="22" />
+                                    FontSize="26" />
                             <Button Grid.Column="2"
                                     Text="{Binding VisualizationIcon}"
                                     Command="{Binding CycleVisualizationCommand}"
@@ -220,10 +235,11 @@
                             <Button Grid.Column="1"
                                     Text="{Binding FavoriteIcon}"
                                     Command="{Binding ToggleFavoriteCommand}"
+                                    TextColor="{Binding IsFavorite, Converter={StaticResource FavoriteColorConverter}}"
                                     Style="{StaticResource VwIconActionButton}"
                                     WidthRequest="52"
                                     HeightRequest="52"
-                                    FontSize="22" />
+                                    FontSize="26" />
                             <Button Grid.Column="2"
                                     Text="{Binding VisualizationIcon}"
                                     Command="{Binding CycleVisualizationCommand}"
@@ -289,6 +305,41 @@
                     </Grid>
                 </VerticalStackLayout>
             </VerticalStackLayout>
+
+            <!-- Visualização em tela cheia -->
+            <Grid Grid.Row="0"
+                  IsVisible="{Binding IsVisualizationFullscreen}"
+                  ZIndex="60"
+                  BackgroundColor="#0D1117">
+                <controls:AudioVisualizationView IsPlaying="{Binding IsPlaying}"
+                                                 Mode="{Binding VisualizationMode}"
+                                                 Bands="{Binding AudioBands}" />
+                <Grid RowDefinitions="Auto,*" Padding="12">
+                    <Button Text="{Binding VisualizationFullscreenIcon}"
+                            Command="{Binding ToggleVisualizationFullscreenCommand}"
+                            HorizontalOptions="End"
+                            WidthRequest="52"
+                            HeightRequest="52"
+                            CornerRadius="26"
+                            FontSize="20"
+                            BackgroundColor="#99000000"
+                            TextColor="White" />
+                    <VerticalStackLayout Grid.Row="1"
+                                         VerticalOptions="End"
+                                         Spacing="4"
+                                         Padding="8,0,8,12">
+                        <Label Text="{Binding Title}"
+                               FontSize="24"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextPrimary}"
+                               LineBreakMode="TailTruncation" />
+                        <Label Text="{Binding Artist}"
+                               FontSize="18"
+                               TextColor="{StaticResource TextMuted}"
+                               LineBreakMode="TailTruncation" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Grid>
         </Grid>
     </controls:VwSafeAreaLayout>
 </ContentPage>

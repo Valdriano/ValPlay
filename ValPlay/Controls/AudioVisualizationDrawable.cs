@@ -11,6 +11,7 @@ public sealed class AudioVisualizationDrawable : IDrawable
   public double Phase { get; set; }
   public bool IsPlaying { get; set; }
   public VisualizationMode Mode { get; set; } = VisualizationMode.Bars;
+  public float[]? Bands { get; set; }
 
   public void Draw(ICanvas canvas, RectF dirtyRect)
   {
@@ -43,49 +44,71 @@ public sealed class AudioVisualizationDrawable : IDrawable
     canvas.RestoreState();
   }
 
-  private static void DrawBars(ICanvas canvas, RectF rect, double phase)
+  private void DrawBars(ICanvas canvas, RectF rect, double phase)
   {
     const int barCount = 22;
     var slot = rect.Width / barCount;
     var barWidth = slot * 0.55f;
+    var hasBands = Bands is { Length: > 0 };
 
     for (var i = 0; i < barCount; i++)
     {
-      var t = phase + i * 0.55;
-      var energy = Math.Abs(Math.Sin(t)) * 0.55 + Math.Abs(Math.Sin(t * 2.3 + 0.4)) * 0.45;
-      var height = rect.Height * (0.08f + (float)energy * 0.88f);
+      float energy;
+      if (hasBands && IsPlaying)
+      {
+        var index = i * Bands!.Length / barCount;
+        energy = Bands[index];
+        energy = 0.12f + energy * 0.88f;
+      }
+      else
+      {
+        var t = phase + i * 0.55;
+        energy = (float)(Math.Abs(Math.Sin(t)) * 0.55 + Math.Abs(Math.Sin(t * 2.3 + 0.4)) * 0.45);
+      }
+
+      var height = rect.Height * (0.08f + energy * 0.88f);
       var x = rect.Left + i * slot + (slot - barWidth) / 2f;
       var y = rect.Bottom - height;
 
-      canvas.FillColor = Accent.WithAlpha((float)(0.35 + energy * 0.55));
+      canvas.FillColor = Accent.WithAlpha(0.35f + energy * 0.55f);
       canvas.FillRoundedRectangle(x, y, barWidth, height, 3);
     }
   }
 
-  private static void DrawWaves(ICanvas canvas, RectF rect, double phase)
+  private void DrawWaves(ICanvas canvas, RectF rect, double phase)
   {
-    DrawWaveLine(canvas, rect, phase, 4, 0.28f, Accent, 2.5f);
-    DrawWaveLine(canvas, rect, phase + 1.2, 6, 0.18f, AccentSoft, 2f);
-    DrawWaveLine(canvas, rect, phase + 2.4, 3, 0.22f, Glow, 1.5f);
+    DrawWaveLine(canvas, rect, phase, 4, 0.28f, Accent, 2.5f, 0);
+    DrawWaveLine(canvas, rect, phase + 1.2, 6, 0.18f, AccentSoft, 2f, 1);
+    DrawWaveLine(canvas, rect, phase + 2.4, 3, 0.22f, Glow, 1.5f, 2);
   }
 
-  private static void DrawWaveLine(
+  private void DrawWaveLine(
     ICanvas canvas,
     RectF rect,
     double phase,
     int cycles,
-    float amplitude,
+    float baseAmplitude,
     Color color,
-    float strokeWidth)
+    float strokeWidth,
+    int bandOffset)
   {
     var path = new PathF();
     var midY = rect.Top + rect.Height / 2f;
     var step = Math.Max(2f, rect.Width / 120f);
+    var hasBands = Bands is { Length: > 0 };
 
     for (var x = rect.Left; x <= rect.Right; x += step)
     {
       var normalized = (x - rect.Left) / rect.Width;
-      var y = midY + Math.Sin(normalized * Math.PI * cycles + phase) * rect.Height * amplitude;
+      var amplitude = baseAmplitude;
+
+      if (hasBands && IsPlaying)
+      {
+        var index = (int)(normalized * (Bands!.Length - 1));
+        amplitude *= 0.35f + Bands[index] * 1.4f;
+      }
+
+      var y = midY + Math.Sin(normalized * Math.PI * cycles + phase + bandOffset) * rect.Height * amplitude;
 
       if (x <= rect.Left)
         path.MoveTo(x, (float)y);
@@ -98,29 +121,35 @@ public sealed class AudioVisualizationDrawable : IDrawable
     canvas.DrawPath(path);
   }
 
-  private static void DrawOrbs(ICanvas canvas, RectF rect, double phase)
+  private void DrawOrbs(ICanvas canvas, RectF rect, double phase)
   {
     var orbs =
-      new (double X, double Y, double Size, double Speed)[]
+      new (double X, double Y, double Size, double Speed, int BandIndex)[]
       {
-        (0.25, 0.45, 0.22, 1.0),
-        (0.55, 0.35, 0.18, 1.3),
-        (0.72, 0.62, 0.16, 0.9),
-        (0.38, 0.68, 0.14, 1.1),
-        (0.62, 0.52, 0.12, 1.5)
+        (0.25, 0.45, 0.22, 1.0, 2),
+        (0.55, 0.35, 0.18, 1.3, 6),
+        (0.72, 0.62, 0.16, 0.9, 12),
+        (0.38, 0.68, 0.14, 1.1, 16),
+        (0.62, 0.52, 0.12, 1.5, 20)
       };
 
-    foreach (var (xRatio, yRatio, sizeRatio, speed) in orbs)
+    var hasBands = Bands is { Length: > 0 };
+
+    foreach (var (xRatio, yRatio, sizeRatio, speed, bandIndex) in orbs)
     {
-      var pulse = 0.75 + Math.Sin(phase * speed) * 0.25;
+      var bandEnergy = hasBands && IsPlaying
+        ? Bands![Math.Min(bandIndex, Bands.Length - 1)]
+        : (float)(0.5 + Math.Abs(Math.Sin(phase * speed)) * 0.5);
+
+      var pulse = 0.65f + bandEnergy * 0.55f;
       var radius = rect.Width * sizeRatio * pulse;
-      var cx = rect.Left + rect.Width * xRatio + Math.Sin(phase * speed * 0.6) * rect.Width * 0.04;
-      var cy = rect.Top + rect.Height * yRatio + Math.Cos(phase * speed * 0.5) * rect.Height * 0.04;
+      var cx = rect.Left + rect.Width * xRatio + Math.Sin(phase * speed * 0.6) * rect.Width * 0.04 * bandEnergy;
+      var cy = rect.Top + rect.Height * yRatio + Math.Cos(phase * speed * 0.5) * rect.Height * 0.04 * bandEnergy;
 
       canvas.FillColor = Glow;
       canvas.FillCircle((float)cx, (float)cy, (float)(radius * 1.35));
 
-      canvas.FillColor = Accent.WithAlpha(0.55f);
+      canvas.FillColor = Accent.WithAlpha(0.35f + bandEnergy * 0.55f);
       canvas.FillCircle((float)cx, (float)cy, (float)radius);
     }
   }

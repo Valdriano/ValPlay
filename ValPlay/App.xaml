@@ -19,6 +19,7 @@
             <conv:BoolToFullscreenIconConverter x:Key="FullscreenIconConverter" />
             <conv:SelectionBackgroundConverter x:Key="SelectionBackgroundConverter" />
             <conv:SelectionIconConverter x:Key="SelectionIconConverter" />
+            <conv:FavoriteColorConverter x:Key="FavoriteColorConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

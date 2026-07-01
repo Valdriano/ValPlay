@@ -76,3 +76,18 @@ public sealed class MediaTypeToIconConverter : IValueConverter
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+public sealed class FavoriteColorConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var key = value is true ? "Accent" : "TextMuted";
+        if (Application.Current?.Resources.TryGetValue(key, out var color) == true)
+            return color;
+
+        return value is true ? Color.FromArgb("#00B4D8") : Color.FromArgb("#8B949E");
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

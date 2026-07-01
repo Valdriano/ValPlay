@@ -6,11 +6,15 @@ public sealed class AudioVisualizationView : ContentView
 {
   public static readonly BindableProperty IsPlayingProperty =
     BindableProperty.Create(nameof(IsPlaying), typeof(bool), typeof(AudioVisualizationView), false,
-      propertyChanged: OnAnimationPropertyChanged);
+      propertyChanged: OnRenderPropertyChanged);
 
   public static readonly BindableProperty ModeProperty =
     BindableProperty.Create(nameof(Mode), typeof(VisualizationMode), typeof(AudioVisualizationView),
-      VisualizationMode.Off, propertyChanged: OnAnimationPropertyChanged);
+      VisualizationMode.Off, propertyChanged: OnRenderPropertyChanged);
+
+  public static readonly BindableProperty BandsProperty =
+    BindableProperty.Create(nameof(Bands), typeof(float[]), typeof(AudioVisualizationView),
+      Array.Empty<float>(), propertyChanged: OnRenderPropertyChanged);
 
   private readonly AudioVisualizationDrawable _drawable = new();
   private readonly GraphicsView _graphicsView;
@@ -46,10 +50,16 @@ public sealed class AudioVisualizationView : ContentView
     set => SetValue(ModeProperty, value);
   }
 
-  private static void OnAnimationPropertyChanged(BindableObject bindable, object _, object __)
+  public float[] Bands
+  {
+    get => (float[])GetValue(BandsProperty);
+    set => SetValue(BandsProperty, value);
+  }
+
+  private static void OnRenderPropertyChanged(BindableObject bindable, object _, object __)
   {
     if (bindable is AudioVisualizationView view)
-      view.UpdateTimerState();
+      view.SyncDrawable();
   }
 
   private void OnTimerTick(object? sender, EventArgs e)
@@ -57,11 +67,18 @@ public sealed class AudioVisualizationView : ContentView
     if (Mode == VisualizationMode.Off)
       return;
 
-    _phase += IsPlaying ? 0.22 : 0.06;
+    _phase += IsPlaying ? 0.18 : 0.05;
     _drawable.Phase = _phase;
+    SyncDrawable();
+    _graphicsView.Invalidate();
+  }
+
+  private void SyncDrawable()
+  {
     _drawable.IsPlaying = IsPlaying;
     _drawable.Mode = Mode;
-    _graphicsView.Invalidate();
+    _drawable.Bands = Bands;
+    UpdateTimerState();
   }
 
   private void UpdateTimerState()
@@ -72,10 +89,6 @@ public sealed class AudioVisualizationView : ContentView
     {
       if (!_timer.IsRunning)
         _timer.Start();
-
-      _drawable.Mode = Mode;
-      _drawable.IsPlaying = IsPlaying;
-      _graphicsView.Invalidate();
       return;
     }
 

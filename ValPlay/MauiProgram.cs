@@ -30,6 +30,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<IFavoritesService, FavoritesService>();
 #if ANDROID
         builder.Services.AddSingleton<IAudioEqualizerService, AndroidAudioEqualizerService>();
+        builder.Services.AddSingleton<IAudioVisualizerService, AndroidAudioVisualizerService>();
+#else
+        builder.Services.AddSingleton<IAudioVisualizerService, NullAudioVisualizerService>();
 #endif
         builder.Services.AddSingleton<AppBootstrapper>();
         builder.Services.AddSingleton<ICarAudioService, AndroidCarAudioService>();

@@ -16,6 +16,7 @@ public partial class PlayerPage : ContentPage
     private readonly ICarAudioService _carAudio;
     private readonly ICarNotificationService _carNotification;
     private readonly IAudioEqualizerService _equalizer;
+    private readonly IAudioVisualizerService _visualizer;
     private bool _isSeeking;
     private bool _shouldResumeAfterFocusGain;
 
@@ -23,24 +24,27 @@ public partial class PlayerPage : ContentPage
         PlayerViewModel viewModel,
         ICarAudioService carAudio,
         ICarNotificationService carNotification,
-        IAudioEqualizerService equalizer)
+        IAudioEqualizerService equalizer,
+        IAudioVisualizerService visualizer)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _carAudio = carAudio;
         _carNotification = carNotification;
         _equalizer = equalizer;
+        _visualizer = visualizer;
         BindingContext = _viewModel;
 
         _carAudio.FocusChanged += OnAudioFocusChanged;
+        _visualizer.BandsUpdated += OnVisualizerBandsUpdated;
 
         _viewModel.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(PlayerViewModel.MediaPath) or nameof(PlayerViewModel.IsPlaying))
                 SyncMediaElement();
 
-            if (e.PropertyName == nameof(PlayerViewModel.IsFullscreen))
-                ApplyFullscreenMode(_viewModel.IsFullscreen);
+            if (e.PropertyName is nameof(PlayerViewModel.IsFullscreen) or nameof(PlayerViewModel.IsVisualizationFullscreen))
+                ApplyChromeMode();
         };
 
         MediaPlayer.MediaOpened += OnMediaOpened;
@@ -54,22 +58,28 @@ public partial class PlayerPage : ContentPage
         base.OnAppearing();
         _viewModel.ReloadSettings();
         SyncMediaElement();
-        ApplyFullscreenMode(_viewModel.IsFullscreen);
+        ApplyChromeMode();
+        AttachAudioEffects();
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        _viewModel.ExitFullscreen();
-        ApplyFullscreenMode(false);
-        _equalizer.Detach();
+        _viewModel.ExitVisualizationFullscreen();
+        if (_viewModel.IsVideo)
+            _viewModel.ExitFullscreen();
 
-        if (MediaPlayer.CurrentState == MediaElementState.Playing)
-            MediaPlayer.Pause();
+        ApplyChromeMode();
     }
 
     protected override bool OnBackButtonPressed()
     {
+        if (_viewModel.IsVisualizationFullscreen)
+        {
+            _viewModel.ExitVisualizationFullscreen();
+            return true;
+        }
+
         if (_viewModel.IsFullscreen)
         {
             _viewModel.ExitFullscreen();
@@ -79,23 +89,30 @@ public partial class PlayerPage : ContentPage
         return base.OnBackButtonPressed();
     }
 
-    private void ApplyFullscreenMode(bool isFullscreen)
+    private void ApplyChromeMode()
     {
-        Shell.SetTabBarIsVisible(this, !isFullscreen);
+        var immersive = _viewModel.IsFullscreen || _viewModel.IsVisualizationFullscreen;
+        Shell.SetTabBarIsVisible(this, !immersive);
 
         if (SafeArea is VwSafeAreaLayout safeArea)
         {
-            safeArea.MaximumWidthRequest = isFullscreen ? double.PositiveInfinity : VwPlayConstants.AppAreaWidth;
-            safeArea.MaximumHeightRequest = isFullscreen ? double.PositiveInfinity : VwPlayConstants.AppAreaHeight;
+            safeArea.MaximumWidthRequest = immersive ? double.PositiveInfinity : VwPlayConstants.AppAreaWidth;
+            safeArea.MaximumHeightRequest = immersive ? double.PositiveInfinity : VwPlayConstants.AppAreaHeight;
         }
 
-        PlayerLayout.Padding = isFullscreen ? new Thickness(0) : new Thickness(16, 12);
-        PlayerLayout.RowSpacing = isFullscreen ? 0 : 0;
-        BackgroundColor = isFullscreen ? Colors.Black : (Color)Application.Current!.Resources["AppBackground"]!;
+        PlayerLayout.Padding = immersive ? new Thickness(0) : new Thickness(16, 12);
+        BackgroundColor = immersive
+            ? Colors.Black
+            : (Color)Application.Current!.Resources["AppBackground"]!;
 
-        MediaPlayer.Aspect = isFullscreen ? Aspect.AspectFill : Aspect.AspectFit;
-        FullscreenButton.Margin = isFullscreen ? new Thickness(16) : new Thickness(8);
+        if (_viewModel.IsVideo)
+            MediaPlayer.Aspect = _viewModel.IsFullscreen ? Aspect.AspectFill : Aspect.AspectFit;
+
+        FullscreenButton.Margin = _viewModel.IsFullscreen ? new Thickness(16) : new Thickness(8);
     }
+
+    private void OnVisualizerBandsUpdated(object? sender, float[] bands) =>
+        MainThread.BeginInvokeOnMainThread(() => _viewModel.UpdateAudioBands(bands));
 
     private void OnAudioFocusChanged(object? sender, CarAudioFocusChange change)
     {
@@ -147,7 +164,7 @@ public partial class PlayerPage : ContentPage
 
     private void OnMediaOpened(object? sender, EventArgs e)
     {
-        AttachEqualizer();
+        AttachAudioEffects();
 
         if (_viewModel.ShouldResumeFromSavedPosition)
             MediaPlayer.SeekTo(TimeSpan.FromSeconds(_viewModel.SavedPositionSeconds));
@@ -156,12 +173,15 @@ public partial class PlayerPage : ContentPage
             TryPlay();
     }
 
-    private void AttachEqualizer()
+    private void AttachAudioEffects()
     {
 #if ANDROID
         var sessionId = AndroidMediaSessionHelper.GetAudioSessionId(MediaPlayer);
-        if (sessionId > 0)
-            _equalizer.AttachToSession(sessionId);
+        if (sessionId <= 0)
+            return;
+
+        _equalizer.AttachToSession(sessionId);
+        _visualizer.AttachToSession(sessionId);
 #endif
     }
 
@@ -183,7 +203,7 @@ public partial class PlayerPage : ContentPage
     {
         if (e.NewState == MediaElementState.Playing)
         {
-            AttachEqualizer();
+            AttachAudioEffects();
             _viewModel.OnPlaybackStarted();
             _carNotification.ShowPlaybackNotification(_viewModel.Title);
         }
@@ -195,6 +215,7 @@ public partial class PlayerPage : ContentPage
             {
                 _carAudio.AbandonMediaFocus();
                 _carNotification.HidePlaybackNotification();
+                _visualizer.Detach();
             }
         }
     }
