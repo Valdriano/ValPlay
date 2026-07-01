@@ -7,7 +7,12 @@ namespace ValPlay.Platforms.Android;
 public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
 {
     private const int BandCount = 22;
-    private const int CaptureRateHz = 20_000;
+    private const int CaptureRateHz = 12_000;
+    private const float MinDb = -48f;
+    private const float MaxDb = 0f;
+    private const float Attack = 0.28f;
+    private const float Release = 0.07f;
+
     private readonly float[] _bands = new float[BandCount];
     private readonly float[] _smoothed = new float[BandCount];
     private Visualizer? _visualizer;
@@ -30,9 +35,9 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
             _visualizer = new Visualizer(targetSession);
             _visualizer.SetCaptureSize(captureSize);
             _visualizer.SetDataCaptureListener(
-                new AudioCaptureListener(OnWaveformCaptured, OnFftCaptured),
+                new FftCaptureListener(OnFftCaptured),
                 CaptureRateHz,
-                true,
+                false,
                 true);
             _visualizer.SetEnabled(true);
             _attachedSessionId = targetSession;
@@ -66,61 +71,26 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
         }
     }
 
-    private void OnWaveformCaptured(byte[] waveform)
-    {
-        ParseWaveform(waveform, _bands);
-        PublishBands();
-    }
-
     private void OnFftCaptured(byte[] fft)
     {
-        ParseFft(fft, _bands);
-        PublishBands();
-    }
-
-    private void PublishBands()
-    {
-        const float smoothing = 0.35f;
-        for (var i = 0; i < _smoothed.Length; i++)
-            _smoothed[i] = _smoothed[i] * (1f - smoothing) + _bands[i] * smoothing;
-
-        NormalizeBands(_smoothed);
+        ParseFftLogBands(fft, _bands);
+        SmoothBands(_bands, _smoothed);
         BandsUpdated?.Invoke(this, _smoothed);
     }
 
-    private static void ParseWaveform(byte[] waveform, float[] bands)
-    {
-        if (waveform.Length < bands.Length)
-            return;
-
-        var chunk = Math.Max(1, waveform.Length / bands.Length);
-
-        for (var band = 0; band < bands.Length; band++)
-        {
-            var sum = 0f;
-            var start = band * chunk;
-            var end = Math.Min(waveform.Length, start + chunk);
-
-            for (var i = start; i < end; i++)
-            {
-                var sample = (sbyte)waveform[i] / 128f;
-                sum += MathF.Abs(sample);
-            }
-
-            bands[band] = sum / Math.Max(1, end - start);
-        }
-    }
-
-    private static void ParseFft(byte[] fft, float[] bands)
+    private static void ParseFftLogBands(byte[] fft, float[] bands)
     {
         var usablePairs = (fft.Length - 2) / 2;
-        if (usablePairs <= 0)
+        if (usablePairs <= 1)
             return;
 
         for (var band = 0; band < bands.Length; band++)
         {
-            var startPair = band * usablePairs / bands.Length;
-            var endPair = (band + 1) * usablePairs / bands.Length;
+            var startPair = LogBinIndex(band, bands.Length, usablePairs);
+            var endPair = LogBinIndex(band + 1, bands.Length, usablePairs);
+            if (endPair <= startPair)
+                endPair = startPair + 1;
+
             var sum = 0f;
             var count = 0;
 
@@ -136,24 +106,40 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
                 count++;
             }
 
-            bands[band] = count > 0 ? sum / count / 128f : 0f;
+            var average = count > 0 ? sum / count : 0f;
+            var db = AmplitudeToDb(average);
+            bands[band] = DbToNormalized(db);
         }
     }
 
-    private static void NormalizeBands(float[] bands)
+    private static int LogBinIndex(int band, int bandCount, int fftBins)
     {
-        var peak = 0f;
-        for (var i = 0; i < bands.Length; i++)
-            peak = MathF.Max(peak, bands[i]);
-
-        var floor = MathF.Max(peak * 0.18f, 0.04f);
-        for (var i = 0; i < bands.Length; i++)
-            bands[i] = Math.Clamp((bands[i] - floor) / MathF.Max(peak - floor, 0.001f), 0.05f, 1f);
+        var ratio = band / (double)bandCount;
+        var value = Math.Pow(fftBins, ratio);
+        return Math.Clamp((int)value - 1, 0, fftBins - 1);
     }
 
-    private sealed class AudioCaptureListener(
-        Action<byte[]> onWaveform,
-        Action<byte[]> onFft) : Java.Lang.Object, Visualizer.IOnDataCaptureListener
+    private static float AmplitudeToDb(float amplitude)
+    {
+        const float minAmp = 2f;
+        var amp = MathF.Max(amplitude, minAmp);
+        return 20f * MathF.Log10(amp / 128f);
+    }
+
+    private static float DbToNormalized(float db) =>
+        Math.Clamp((db - MinDb) / (MaxDb - MinDb), 0f, 1f);
+
+    private static void SmoothBands(float[] source, float[] destination)
+    {
+        for (var i = 0; i < destination.Length; i++)
+        {
+            var target = i < source.Length ? source[i] : 0f;
+            var coeff = target > destination[i] ? Attack : Release;
+            destination[i] += (target - destination[i]) * coeff;
+        }
+    }
+
+    private sealed class FftCaptureListener(Action<byte[]> onFft) : Java.Lang.Object, Visualizer.IOnDataCaptureListener
     {
         public void OnFftDataCapture(Visualizer? visualizer, byte[]? fft, int samplingRate)
         {
@@ -161,11 +147,7 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
                 onFft(fft);
         }
 
-        public void OnWaveFormDataCapture(Visualizer? visualizer, byte[]? waveform, int samplingRate)
-        {
-            if (waveform is { Length: > 0 })
-                onWaveform(waveform);
-        }
+        public void OnWaveFormDataCapture(Visualizer? visualizer, byte[]? waveform, int samplingRate) { }
     }
 }
 #endif
