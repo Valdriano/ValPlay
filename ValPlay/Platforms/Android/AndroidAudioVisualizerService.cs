@@ -7,11 +7,11 @@ namespace ValPlay.Platforms.Android;
 public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
 {
     private const int BandCount = 22;
-    private const int CaptureRateHz = 12_000;
-    private const float MinDb = -48f;
+    private const int CaptureRateHz = 15_000;
+    private const float MinDb = -54f;
     private const float MaxDb = 0f;
-    private const float Attack = 0.28f;
-    private const float Release = 0.07f;
+    private const float MinHz = 40f;
+    private const float MaxHz = 16_000f;
 
     private readonly float[] _bands = new float[BandCount];
     private readonly float[] _smoothed = new float[BandCount];
@@ -31,9 +31,8 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
         try
         {
             var range = Visualizer.GetCaptureSizeRange()!;
-            var captureSize = range[1];
             _visualizer = new Visualizer(targetSession);
-            _visualizer.SetCaptureSize(captureSize);
+            _visualizer.SetCaptureSize(range[1]);
             _visualizer.SetDataCaptureListener(
                 new FftCaptureListener(OnFftCaptured),
                 CaptureRateHz,
@@ -71,80 +70,91 @@ public sealed class AndroidAudioVisualizerService : IAudioVisualizerService
         }
     }
 
-    private void OnFftCaptured(byte[] fft)
+    private void OnFftCaptured(byte[] fft, int samplingRate)
     {
-        ParseFftLogBands(fft, _bands);
+        if (samplingRate <= 0)
+            samplingRate = 44_100;
+
+        MapFrequencyBands(fft, samplingRate, _bands);
         SmoothBands(_bands, _smoothed);
         BandsUpdated?.Invoke(this, _smoothed);
     }
 
-    private static void ParseFftLogBands(byte[] fft, float[] bands)
+    private static void MapFrequencyBands(byte[] fft, int samplingRate, float[] bands)
     {
-        var usablePairs = (fft.Length - 2) / 2;
-        if (usablePairs <= 1)
+        var binCount = fft.Length / 2;
+        if (binCount < 2)
             return;
+
+        var hzPerBin = (float)samplingRate / fft.Length;
+        var maxHz = Math.Min(MaxHz, samplingRate * 0.45f);
 
         for (var band = 0; band < bands.Length; band++)
         {
-            var startPair = LogBinIndex(band, bands.Length, usablePairs);
-            var endPair = LogBinIndex(band + 1, bands.Length, usablePairs);
-            if (endPair <= startPair)
-                endPair = startPair + 1;
+            var hzStart = LogFrequency(band, bands.Length, MinHz, maxHz);
+            var hzEnd = LogFrequency(band + 1, bands.Length, MinHz, maxHz);
 
-            var sum = 0f;
-            var count = 0;
+            var binStart = Math.Clamp((int)(hzStart / hzPerBin), 1, binCount - 1);
+            var binEnd = Math.Clamp((int)Math.Ceiling(hzEnd / hzPerBin), binStart + 1, binCount - 1);
 
-            for (var pair = startPair; pair < endPair; pair++)
-            {
-                var index = 2 + pair * 2;
-                if (index + 1 >= fft.Length)
-                    break;
+            var peak = 0f;
+            for (var bin = binStart; bin <= binEnd; bin++)
+                peak = MathF.Max(peak, GetBinMagnitude(fft, bin));
 
-                var real = (sbyte)fft[index];
-                var imag = (sbyte)fft[index + 1];
-                sum += MathF.Sqrt(real * real + imag * imag);
-                count++;
-            }
-
-            var average = count > 0 ? sum / count : 0f;
-            var db = AmplitudeToDb(average);
-            bands[band] = DbToNormalized(db);
+            bands[band] = MagnitudeToLevel(peak);
         }
     }
 
-    private static int LogBinIndex(int band, int bandCount, int fftBins)
+    private static float LogFrequency(int bandIndex, int bandCount, float minHz, float maxHz)
     {
-        var ratio = band / (double)bandCount;
-        var value = Math.Pow(fftBins, ratio);
-        return Math.Clamp((int)value - 1, 0, fftBins - 1);
+        var t = bandIndex / (float)bandCount;
+        var logMin = MathF.Log10(minHz);
+        var logMax = MathF.Log10(maxHz);
+        return MathF.Pow(10f, logMin + (logMax - logMin) * t);
     }
 
-    private static float AmplitudeToDb(float amplitude)
+    private static float GetBinMagnitude(byte[] fft, int bin)
     {
-        const float minAmp = 2f;
-        var amp = MathF.Max(amplitude, minAmp);
-        return 20f * MathF.Log10(amp / 128f);
+        if (bin <= 0)
+            return MathF.Abs((sbyte)fft[0]);
+
+        var nyquistBin = fft.Length / 2;
+        if (bin >= nyquistBin)
+            return MathF.Abs((sbyte)fft[1]);
+
+        var index = bin * 2;
+        if (index + 1 >= fft.Length)
+            return 0f;
+
+        var real = (sbyte)fft[index];
+        var imag = (sbyte)fft[index + 1];
+        return MathF.Sqrt(real * real + imag * imag);
     }
 
-    private static float DbToNormalized(float db) =>
-        Math.Clamp((db - MinDb) / (MaxDb - MinDb), 0f, 1f);
+    private static float MagnitudeToLevel(float magnitude)
+    {
+        var db = 20f * MathF.Log10(MathF.Max(magnitude, 1f) / 128f);
+        return Math.Clamp((db - MinDb) / (MaxDb - MinDb), 0f, 1f);
+    }
 
     private static void SmoothBands(float[] source, float[] destination)
     {
         for (var i = 0; i < destination.Length; i++)
         {
             var target = i < source.Length ? source[i] : 0f;
-            var coeff = target > destination[i] ? Attack : Release;
+            var attack = i < 7 ? 0.72f : i < 15 ? 0.58f : 0.48f;
+            var release = i < 7 ? 0.18f : i < 15 ? 0.14f : 0.11f;
+            var coeff = target > destination[i] ? attack : release;
             destination[i] += (target - destination[i]) * coeff;
         }
     }
 
-    private sealed class FftCaptureListener(Action<byte[]> onFft) : Java.Lang.Object, Visualizer.IOnDataCaptureListener
+    private sealed class FftCaptureListener(Action<byte[], int> onFft) : Java.Lang.Object, Visualizer.IOnDataCaptureListener
     {
         public void OnFftDataCapture(Visualizer? visualizer, byte[]? fft, int samplingRate)
         {
             if (fft is { Length: > 2 })
-                onFft(fft);
+                onFft(fft, samplingRate);
         }
 
         public void OnWaveFormDataCapture(Visualizer? visualizer, byte[]? waveform, int samplingRate) { }

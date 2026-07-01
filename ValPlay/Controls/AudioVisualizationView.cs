@@ -24,7 +24,6 @@ public sealed class AudioVisualizationView : ContentView
   private readonly GraphicsView _graphicsView;
   private readonly IDispatcherTimer _timer;
   private readonly float[] _displayBands = new float[22];
-  private double _phase;
 
   public AudioVisualizationView()
   {
@@ -39,7 +38,7 @@ public sealed class AudioVisualizationView : ContentView
     Content = _graphicsView;
 
     _timer = Dispatcher.CreateTimer();
-    _timer.Interval = TimeSpan.FromMilliseconds(40);
+    _timer.Interval = TimeSpan.FromMilliseconds(33);
     _timer.Tick += OnTimerTick;
   }
 
@@ -81,22 +80,19 @@ public sealed class AudioVisualizationView : ContentView
     if (bindable is not AudioVisualizationView view)
       return;
 
-    view.ApplyIncomingBands();
+    view.CopyBandsToDisplay();
+    view.SyncDrawable();
     view._graphicsView.Invalidate();
   }
 
-  private void ApplyIncomingBands()
+  private void CopyBandsToDisplay()
   {
     var source = Bands;
     if (source is not { Length: > 0 })
       return;
 
-    for (var i = 0; i < _displayBands.Length; i++)
-    {
-      var target = i < source.Length ? source[i] : 0f;
-      var coeff = target > _displayBands[i] ? 0.22f : 0.06f;
-      _displayBands[i] += (target - _displayBands[i]) * coeff;
-    }
+    var count = Math.Min(source.Length, _displayBands.Length);
+    Array.Copy(source, _displayBands, count);
   }
 
   private void OnTimerTick(object? sender, EventArgs e)
@@ -104,13 +100,13 @@ public sealed class AudioVisualizationView : ContentView
     if (Mode == VisualizationMode.Off)
       return;
 
-    ApplyIncomingBands();
+    if (!IsPlaying)
+    {
+      for (var i = 0; i < _displayBands.Length; i++)
+        _displayBands[i] *= 0.9f;
+    }
 
-    _phase += IsPlaying ? 0.04 : 0.015;
-    _drawable.Phase = _phase;
-    _drawable.Bands = _displayBands;
-    _drawable.IsPlaying = IsPlaying;
-    _drawable.Mode = Mode;
+    SyncDrawable();
     _graphicsView.Invalidate();
   }
 

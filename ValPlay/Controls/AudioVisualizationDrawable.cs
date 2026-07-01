@@ -78,35 +78,29 @@ public sealed class AudioVisualizationDrawable : IDrawable
     var plot = new RectF(rect.Left + leftPad, rect.Top + 8f, rect.Right - 6f, rect.Bottom - 8f);
     var slot = plot.Width / barCount;
     var barWidth = slot * 0.52f;
-    var useSpectrum = HasActiveSpectrum(Bands) && IsPlaying;
 
     DrawDbGrid(canvas, plot, showScale);
 
     for (var i = 0; i < barCount; i++)
     {
-      float normalized;
-      if (useSpectrum)
-      {
-        var index = Math.Min(i, Bands!.Length - 1);
-        normalized = Bands[index];
-      }
-      else
-      {
-        var t = phase + i * 0.35;
-        normalized = (float)(0.18 + Math.Abs(Math.Sin(t)) * 0.42);
-      }
+      var normalized = 0.03f;
+      if (IsPlaying && Bands is { Length: > 0 })
+        normalized = MathF.Max(0.03f, Bands[Math.Min(i, Bands.Length - 1)]);
 
       var db = NormalizedToDb(normalized);
-      var height = MathF.Max(4f, DbToHeight(db, plot.Height));
+      var height = MathF.Max(3f, DbToHeight(db, plot.Height));
       var x = plot.Left + i * slot + (slot - barWidth) / 2f;
       var y = plot.Bottom - height;
-      var intensity = (db - MinDb) / (MaxDb - MinDb);
+      var intensity = normalized;
 
-      canvas.FillColor = Accent.WithAlpha(0.25f + intensity * 0.65f);
+      var barColor = i < 7
+        ? Color.FromArgb("#00B4D8")
+        : i < 15
+          ? Color.FromArgb("#33D4FF")
+          : Color.FromArgb("#7AE7FF");
+
+      canvas.FillColor = barColor.WithAlpha(0.28f + intensity * 0.7f);
       canvas.FillRoundedRectangle(x, y, barWidth, height, 2);
-
-      canvas.FillColor = AccentSoft.WithAlpha(0.15f + intensity * 0.25f);
-      canvas.FillRoundedRectangle(x, y, barWidth, MathF.Min(4f, height), 2);
     }
   }
 
