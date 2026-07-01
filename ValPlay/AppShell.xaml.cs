@@ -25,6 +25,7 @@ public partial class AppShell : Shell
         _libraryTab = new ShellContent
         {
             Title = _localization.GetString("Tab_Library"),
+            Icon = "tab_library",
             Content = libraryPage,
             Route = "LibraryPage"
         };
@@ -32,6 +33,7 @@ public partial class AppShell : Shell
         _playerTab = new ShellContent
         {
             Title = _localization.GetString("Tab_Player"),
+            Icon = "tab_player",
             Content = playerPage,
             Route = "PlayerPage"
         };
@@ -39,6 +41,7 @@ public partial class AppShell : Shell
         _settingsTab = new ShellContent
         {
             Title = _localization.GetString("Tab_Settings"),
+            Icon = "tab_settings",
             Content = settingsPage,
             Route = "SettingsPage"
         };
@@ -46,6 +49,7 @@ public partial class AppShell : Shell
         _aboutTab = new ShellContent
         {
             Title = _localization.GetString("Tab_About"),
+            Icon = "tab_about",
             Content = aboutPage,
             Route = "AboutPage"
         };
