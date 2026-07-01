@@ -26,20 +26,25 @@ public partial class SettingsViewModel : ObservableObject
         {
             OnPropertyChanged(string.Empty);
             RefreshRepeatModeOptions();
+            RefreshVisualizationModeOptions();
         };
 
         Languages = new ObservableCollection<LanguageOption>(_localization.AvailableLanguages);
         RepeatModeOptions = new ObservableCollection<RepeatModeOption>();
+        VisualizationModeOptions = new ObservableCollection<VisualizationModeOption>();
 
         _isLoading = true;
         LoadFromSettings();
         RefreshRepeatModeOptions();
+        RefreshVisualizationModeOptions();
         _isLoading = false;
     }
 
     public ObservableCollection<LanguageOption> Languages { get; }
 
     public ObservableCollection<RepeatModeOption> RepeatModeOptions { get; }
+
+    public ObservableCollection<VisualizationModeOption> VisualizationModeOptions { get; }
 
     public string PageTitle => _localization.GetString("Settings_Title");
     public string PlaybackTitle => _localization.GetString("Settings_Playback");
@@ -50,6 +55,8 @@ public partial class SettingsViewModel : ObservableObject
     public string ResumeHint => _localization.GetString("Settings_ResumeHint");
     public string ClearSessionLabel => _localization.GetString("Settings_ClearSession");
     public string LanguageTitle => _localization.GetString("Settings_Language");
+    public string VisualizationTitle => _localization.GetString("Viz_Title");
+    public string VisualizationHint => _localization.GetString("Viz_Hint");
 
     [ObservableProperty]
     private bool _shuffleEnabled;
@@ -59,6 +66,12 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private RepeatModeOption? _selectedRepeatMode;
+
+    [ObservableProperty]
+    private VisualizationModeOption? _selectedVisualizationMode;
+
+    [ObservableProperty]
+    private VisualizationMode _visualizationMode;
 
     [ObservableProperty]
     private bool _resumePlaybackOnStart = true;
@@ -117,6 +130,23 @@ public partial class SettingsViewModel : ObservableObject
         _localization.SetLanguage(value.Code);
     }
 
+    partial void OnSelectedVisualizationModeChanged(VisualizationModeOption? value)
+    {
+        if (_isLoading || value is null)
+            return;
+
+        VisualizationMode = value.Mode;
+    }
+
+    partial void OnVisualizationModeChanged(VisualizationMode value)
+    {
+        if (_isLoading)
+            return;
+
+        _settingsService.Update(settings => settings.VisualizationMode = value);
+        SyncSelectedVisualizationMode(value);
+    }
+
     [RelayCommand]
     private void ClearSavedSession()
     {
@@ -132,6 +162,7 @@ public partial class SettingsViewModel : ObservableObject
         var settings = _settingsService.Current;
         ShuffleEnabled = settings.ShuffleEnabled;
         RepeatMode = settings.RepeatMode;
+        VisualizationMode = settings.VisualizationMode;
         ResumePlaybackOnStart = settings.ResumePlaybackOnStart;
 
         SelectedLanguage = Languages.FirstOrDefault(language =>
@@ -160,6 +191,40 @@ public partial class SettingsViewModel : ObservableObject
         });
 
         SyncSelectedRepeatMode(currentMode);
+    }
+
+    private void RefreshVisualizationModeOptions()
+    {
+        var currentMode = VisualizationMode;
+        VisualizationModeOptions.Clear();
+        VisualizationModeOptions.Add(new VisualizationModeOption
+        {
+            Mode = VisualizationMode.Off,
+            Label = _localization.GetVisualizationModeLabel(VisualizationMode.Off)
+        });
+        VisualizationModeOptions.Add(new VisualizationModeOption
+        {
+            Mode = VisualizationMode.Bars,
+            Label = _localization.GetVisualizationModeLabel(VisualizationMode.Bars)
+        });
+        VisualizationModeOptions.Add(new VisualizationModeOption
+        {
+            Mode = VisualizationMode.Waves,
+            Label = _localization.GetVisualizationModeLabel(VisualizationMode.Waves)
+        });
+        VisualizationModeOptions.Add(new VisualizationModeOption
+        {
+            Mode = VisualizationMode.Orbs,
+            Label = _localization.GetVisualizationModeLabel(VisualizationMode.Orbs)
+        });
+
+        SyncSelectedVisualizationMode(currentMode);
+    }
+
+    private void SyncSelectedVisualizationMode(VisualizationMode mode)
+    {
+        SelectedVisualizationMode = VisualizationModeOptions.FirstOrDefault(option => option.Mode == mode)
+            ?? VisualizationModeOptions.FirstOrDefault();
     }
 
     private void SyncSelectedRepeatMode(RepeatMode mode)

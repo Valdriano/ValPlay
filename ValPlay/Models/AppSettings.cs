@@ -12,4 +12,5 @@ public sealed class AppSettings
     public bool ShowAudioOnly { get; set; }
     public string Language { get; set; } = "pt";
     public EqualizerPreset EqualizerPreset { get; set; } = EqualizerPreset.Normal;
+    public VisualizationMode VisualizationMode { get; set; } = VisualizationMode.Off;
 }

@@ -13,4 +13,5 @@ public interface IFavoritesService
     void Remove(string path);
     bool Toggle(MediaItem media);
     IReadOnlyList<MediaItem> GetPlayableItems();
+    int PruneMissingFiles();
 }

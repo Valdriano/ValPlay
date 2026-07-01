@@ -60,6 +60,18 @@
                             OnColor="{StaticResource Accent}" />
                 </Grid>
 
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding VisualizationTitle}"
+                           FontSize="18"
+                           TextColor="{StaticResource TextPrimary}" />
+                    <Label Text="{Binding VisualizationHint}"
+                           Style="{StaticResource VwCaption}" />
+                    <Picker ItemsSource="{Binding VisualizationModeOptions}"
+                            SelectedItem="{Binding SelectedVisualizationMode}"
+                            ItemDisplayBinding="{Binding Label}"
+                            Style="{StaticResource VwPicker}" />
+                </VerticalStackLayout>
+
                 <BoxView HeightRequest="1" Color="{StaticResource SurfaceLight}" />
 
                 <Button Text="{Binding ClearSessionLabel}"

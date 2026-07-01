@@ -62,14 +62,17 @@
                     </Border.StrokeShape>
 
                     <Grid>
+                        <controls:AudioVisualizationView IsPlaying="{Binding IsPlaying}"
+                                                         Mode="{Binding VisualizationMode}"
+                                                         IsVisible="{Binding ShowVisualization}" />
                         <Image Source="{Binding AlbumArt}"
                                Aspect="AspectFill"
-                               IsVisible="{Binding HasAlbumArt}" />
+                               IsVisible="{Binding ShowAlbumArtImage}" />
                         <Label Text="🎵"
                                FontSize="72"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
-                               IsVisible="{Binding HasAlbumArt, Converter={StaticResource InvertedBoolConverter}}" />
+                               IsVisible="{Binding ShowAlbumArtPlaceholder}" />
                     </Grid>
                 </Border>
 
@@ -80,7 +83,7 @@
                                          VerticalOptions="Center"
                                          HorizontalOptions="Center"
                                          MaximumWidthRequest="760">
-                        <Grid ColumnDefinitions="*,Auto,Auto"
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto"
                               ColumnSpacing="8"
                               IsVisible="{Binding ShowPlayerChrome}">
                             <Button Grid.Column="1"
@@ -91,6 +94,14 @@
                                     HeightRequest="52"
                                     FontSize="22" />
                             <Button Grid.Column="2"
+                                    Text="{Binding VisualizationIcon}"
+                                    Command="{Binding CycleVisualizationCommand}"
+                                    IsVisible="{Binding ShowVisualizationToggle}"
+                                    Style="{StaticResource VwIconActionButton}"
+                                    WidthRequest="52"
+                                    HeightRequest="52"
+                                    FontSize="22" />
+                            <Button Grid.Column="3"
                                     Text="{Binding EqualizerIcon}"
                                     Command="{Binding OpenEqualizerCommand}"
                                     IsVisible="{Binding ShowEqualizer}"
@@ -205,7 +216,7 @@
                                  IsVisible="{Binding IsVideo}">
                 <VerticalStackLayout IsVisible="{Binding ShowPlayerChrome}" Spacing="6">
                     <VerticalStackLayout IsVisible="{Binding HasMedia}" Spacing="6">
-                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
                             <Button Grid.Column="1"
                                     Text="{Binding FavoriteIcon}"
                                     Command="{Binding ToggleFavoriteCommand}"
@@ -214,6 +225,14 @@
                                     HeightRequest="52"
                                     FontSize="22" />
                             <Button Grid.Column="2"
+                                    Text="{Binding VisualizationIcon}"
+                                    Command="{Binding CycleVisualizationCommand}"
+                                    IsVisible="{Binding ShowVisualizationToggle}"
+                                    Style="{StaticResource VwIconActionButton}"
+                                    WidthRequest="52"
+                                    HeightRequest="52"
+                                    FontSize="22" />
+                            <Button Grid.Column="3"
                                     Text="{Binding EqualizerIcon}"
                                     Command="{Binding OpenEqualizerCommand}"
                                     IsVisible="{Binding ShowEqualizer}"

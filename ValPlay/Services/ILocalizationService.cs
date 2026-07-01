@@ -16,4 +16,5 @@ public interface ILocalizationService
     void SetLanguage(string languageCode);
     void ApplySavedLanguage();
     string GetRepeatModeLabel(RepeatMode mode);
+    string GetVisualizationModeLabel(VisualizationMode mode);
 }

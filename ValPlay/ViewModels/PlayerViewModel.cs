@@ -46,12 +46,26 @@ public partial class PlayerViewModel : ObservableObject
 
         ApplyEmptyState();
         RefreshFromService();
+
+        VisualizationMode = _settingsService.Current.VisualizationMode;
     }
 
     public string PageTitle => _localization.GetString("Player_Title");
     public string FavoriteIcon => IsFavorite ? "❤️" : "🤍";
     public string EqualizerIcon => "🎚️";
     public bool ShowEqualizer => HasMedia && IsAudio;
+    public bool ShowVisualizationToggle => IsAudio;
+    public bool ShowVisualization => IsAudio && VisualizationMode != VisualizationMode.Off;
+    public bool ShowAlbumArtImage => IsAudio && HasAlbumArt && VisualizationMode == VisualizationMode.Off;
+    public bool ShowAlbumArtPlaceholder => IsAudio && !HasAlbumArt && VisualizationMode == VisualizationMode.Off;
+
+    public string VisualizationIcon => VisualizationMode switch
+    {
+        VisualizationMode.Bars => "📊",
+        VisualizationMode.Waves => "〰️",
+        VisualizationMode.Orbs => "✨",
+        _ => "🎨"
+    };
 
     [ObservableProperty]
     private string _title = string.Empty;
@@ -110,6 +124,9 @@ public partial class PlayerViewModel : ObservableObject
     private bool _isFavorite;
 
     [ObservableProperty]
+    private VisualizationMode _visualizationMode;
+
+    [ObservableProperty]
     private string? _mediaPath;
 
     [ObservableProperty]
@@ -153,6 +170,21 @@ public partial class PlayerViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void CycleVisualization()
+    {
+        VisualizationMode = VisualizationMode switch
+        {
+            VisualizationMode.Off => VisualizationMode.Bars,
+            VisualizationMode.Bars => VisualizationMode.Waves,
+            VisualizationMode.Waves => VisualizationMode.Orbs,
+            _ => VisualizationMode.Off
+        };
+
+        _settingsService.Update(settings => settings.VisualizationMode = VisualizationMode);
+        NotifyVisualizationProperties();
+    }
+
+    [RelayCommand]
     private void ToggleFullscreen()
     {
         if (!IsVideo)
@@ -167,11 +199,21 @@ public partial class PlayerViewModel : ObservableObject
             IsFullscreen = false;
     }
 
+    public void ReloadSettings()
+    {
+        VisualizationMode = _settingsService.Current.VisualizationMode;
+        NotifyVisualizationProperties();
+    }
+
     partial void OnIsFullscreenChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowPlayerChrome));
         OnPropertyChanged(nameof(ShowAudioProgress));
     }
+
+    partial void OnVisualizationModeChanged(VisualizationMode value) => NotifyVisualizationProperties();
+
+    partial void OnIsPlayingChanged(bool value) => OnPropertyChanged(nameof(ShowVisualization));
 
     partial void OnIsVideoChanged(bool value)
     {
@@ -181,6 +223,7 @@ public partial class PlayerViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAudio));
         OnPropertyChanged(nameof(ShowAudioProgress));
         OnPropertyChanged(nameof(ShowEqualizer));
+        NotifyVisualizationProperties();
     }
 
     partial void OnHasMediaChanged(bool value)
@@ -188,12 +231,26 @@ public partial class PlayerViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAudio));
         OnPropertyChanged(nameof(ShowAudioProgress));
         OnPropertyChanged(nameof(ShowEqualizer));
+        NotifyVisualizationProperties();
     }
 
     partial void OnIsFavoriteChanged(bool value) => OnPropertyChanged(nameof(FavoriteIcon));
 
-    partial void OnAlbumArtChanged(ImageSource? value) =>
+    partial void OnAlbumArtChanged(ImageSource? value)
+    {
         OnPropertyChanged(nameof(HasAlbumArt));
+        OnPropertyChanged(nameof(ShowAlbumArtImage));
+        OnPropertyChanged(nameof(ShowAlbumArtPlaceholder));
+    }
+
+    private void NotifyVisualizationProperties()
+    {
+        OnPropertyChanged(nameof(ShowVisualization));
+        OnPropertyChanged(nameof(ShowVisualizationToggle));
+        OnPropertyChanged(nameof(ShowAlbumArtImage));
+        OnPropertyChanged(nameof(ShowAlbumArtPlaceholder));
+        OnPropertyChanged(nameof(VisualizationIcon));
+    }
 
     public void OnPlaybackStarted()
     {
@@ -314,7 +371,20 @@ public partial class PlayerViewModel : ObservableObject
     private void UpdateFavoriteState()
     {
         var path = _playbackService.CurrentMedia?.Path ?? MediaPath;
-        IsFavorite = !string.IsNullOrWhiteSpace(path) && _favoritesService.IsFavorite(path);
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            IsFavorite = false;
+            return;
+        }
+
+        if (!File.Exists(path))
+        {
+            _favoritesService.Remove(path);
+            IsFavorite = false;
+            return;
+        }
+
+        IsFavorite = _favoritesService.IsFavorite(path);
     }
 
     private void RefreshFromService()

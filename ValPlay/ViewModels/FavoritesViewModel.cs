@@ -41,7 +41,7 @@ public partial class FavoritesViewModel : ObservableObject
     public string RemoveIcon => "✕";
 
     public bool HasItems => Items.Count > 0;
-    public bool CanPlay => Items.Any(item => item.Exists);
+    public bool CanPlay => Items.Count > 0;
 
     [ObservableProperty]
     private string _statusMessage = string.Empty;
@@ -70,8 +70,14 @@ public partial class FavoritesViewModel : ObservableObject
     [RelayCommand]
     private async Task PlayItemAsync(FavoriteRow row)
     {
-        if (!row.Exists || row.Entry is null)
+        if (row.Entry is null)
             return;
+
+        if (!File.Exists(row.Entry.Path))
+        {
+            _favoritesService.Remove(row.Entry.Path);
+            return;
+        }
 
         var playlist = GetPlayableItems();
         var media = row.Entry.ToMediaItem();
@@ -95,6 +101,7 @@ public partial class FavoritesViewModel : ObservableObject
 
     public void Refresh()
     {
+        _favoritesService.PruneMissingFiles();
         Items.Clear();
 
         foreach (var entry in _favoritesService.Items)
@@ -103,8 +110,7 @@ public partial class FavoritesViewModel : ObservableObject
             {
                 Entry = entry,
                 Title = entry.Title,
-                Subtitle = BuildSubtitle(entry),
-                Exists = File.Exists(entry.Path)
+                Subtitle = BuildSubtitle(entry)
             });
         }
 
@@ -146,7 +152,6 @@ public sealed class FavoriteRow
     public required FavoriteEntry Entry { get; init; }
     public required string Title { get; init; }
     public required string Subtitle { get; init; }
-    public required bool Exists { get; init; }
 
     public string TypeIcon => Entry.Type == MediaType.Video ? "🎬" : "🎵";
 }

@@ -52,6 +52,7 @@ public partial class PlayerPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        _viewModel.ReloadSettings();
         SyncMediaElement();
         ApplyFullscreenMode(_viewModel.IsFullscreen);
     }

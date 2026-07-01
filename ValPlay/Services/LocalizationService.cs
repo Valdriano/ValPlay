@@ -73,6 +73,14 @@ public sealed class LocalizationService : ILocalizationService
         _ => GetString("Repeat_Off")
     };
 
+    public string GetVisualizationModeLabel(VisualizationMode mode) => mode switch
+    {
+        VisualizationMode.Bars => GetString("Viz_Bars"),
+        VisualizationMode.Waves => GetString("Viz_Waves"),
+        VisualizationMode.Orbs => GetString("Viz_Orbs"),
+        _ => GetString("Viz_Off")
+    };
+
     private static string NormalizeLanguageCode(string? languageCode)
     {
         if (string.IsNullOrWhiteSpace(languageCode))

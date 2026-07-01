@@ -13,6 +13,7 @@ public sealed class FavoritesService : IFavoritesService
     public FavoritesService()
     {
         Load();
+        PruneMissingFiles();
     }
 
     public event EventHandler? FavoritesChanged;
@@ -55,6 +56,12 @@ public sealed class FavoritesService : IFavoritesService
 
     public bool Toggle(MediaItem media)
     {
+        if (!File.Exists(media.Path))
+        {
+            Remove(media.Path);
+            return false;
+        }
+
         if (IsFavorite(media.Path))
         {
             Remove(media.Path);
@@ -65,11 +72,27 @@ public sealed class FavoritesService : IFavoritesService
         return true;
     }
 
-    public IReadOnlyList<MediaItem> GetPlayableItems() =>
-        _items
+    public IReadOnlyList<MediaItem> GetPlayableItems()
+    {
+        PruneMissingFiles();
+        return _items
             .Where(item => File.Exists(item.Path))
             .Select(item => item.ToMediaItem())
             .ToList();
+    }
+
+    public int PruneMissingFiles()
+    {
+        var before = _items.Count;
+        _items.RemoveAll(item => !File.Exists(item.Path));
+
+        if (_items.Count == before)
+            return 0;
+
+        Save();
+        FavoritesChanged?.Invoke(this, EventArgs.Empty);
+        return before - _items.Count;
+    }
 
     private void Load()
     {

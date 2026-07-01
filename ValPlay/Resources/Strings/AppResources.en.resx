@@ -75,4 +75,10 @@
   <data name="Eq_Vocal" xml:space="preserve"><value>Vocal</value></data>
   <data name="Eq_Rock" xml:space="preserve"><value>Rock</value></data>
   <data name="Eq_Pop" xml:space="preserve"><value>Pop</value></data>
+  <data name="Viz_Title" xml:space="preserve"><value>Animated visualization</value></data>
+  <data name="Viz_Hint" xml:space="preserve"><value>Visual effect during audio playback (Windows Media Player style)</value></data>
+  <data name="Viz_Off" xml:space="preserve"><value>Off (album art)</value></data>
+  <data name="Viz_Bars" xml:space="preserve"><value>Bars</value></data>
+  <data name="Viz_Waves" xml:space="preserve"><value>Waves</value></data>
+  <data name="Viz_Orbs" xml:space="preserve"><value>Ambience</value></data>
 </root>
