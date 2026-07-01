@@ -5,7 +5,6 @@
 		android:icon="@mipmap/appicon"
 		android:roundIcon="@mipmap/appicon_round"
 		android:supportsRtl="false"
-		android:theme="@style/Maui.MainTheme"
 		android:label="ValPlay" />
 
 	<!-- VW Play: Android Automotive 9.0 (API 28) / AOSP sem GMS -->
