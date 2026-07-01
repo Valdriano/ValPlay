@@ -1,16 +1,14 @@
-using Microsoft.Extensions.DependencyInjection;
+using ValPlay.Pages;
 
 namespace ValPlay.Pages;
 
 public partial class SplashPage : ContentPage
 {
-    private readonly IServiceProvider _services;
     private bool _animationStarted;
 
-    public SplashPage(IServiceProvider services)
+    public SplashPage()
     {
         InitializeComponent();
-        _services = services;
     }
 
     protected override void OnAppearing()
@@ -58,8 +56,7 @@ public partial class SplashPage : ContentPage
 
         await Task.Delay(250);
 
-        var shell = _services.GetRequiredService<AppShell>();
-        if (Application.Current?.Windows.FirstOrDefault() is { } window)
-            window.Page = shell;
+        if (Navigation.ModalStack.Count > 0)
+            await Navigation.PopModalAsync();
     }
 }

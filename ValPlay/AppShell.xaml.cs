@@ -11,6 +11,7 @@ public partial class AppShell : Shell
     private readonly ShellContent _playerTab;
     private readonly ShellContent _settingsTab;
     private readonly ShellContent _aboutTab;
+    private bool _splashShown;
 
     public AppShell(
         LibraryPage libraryPage,
@@ -22,6 +23,7 @@ public partial class AppShell : Shell
         ILocalizationService localization)
     {
         InitializeComponent();
+        FlyoutBehavior = FlyoutBehavior.Disabled;
         _localization = localization;
 
         _libraryTab = new ShellContent
@@ -71,8 +73,29 @@ public partial class AppShell : Shell
         MainTabBar.Items.Add(_aboutTab);
 
         _localization.LanguageChanged += (_, _) => UpdateTabTitles();
+        Loaded += OnShellLoaded;
 
         _ = InitializeAppAsync(bootstrapper);
+    }
+
+    private async void OnShellLoaded(object? sender, EventArgs e)
+    {
+        if (_splashShown)
+            return;
+
+        _splashShown = true;
+        Loaded -= OnShellLoaded;
+
+        await Task.Delay(100);
+
+        try
+        {
+            await Navigation.PushModalAsync(new SplashPage(), false);
+        }
+        catch
+        {
+            // Splash opcional — não impede o uso do app.
+        }
     }
 
     private void UpdateTabTitles()

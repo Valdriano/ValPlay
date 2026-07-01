@@ -46,6 +46,7 @@ public static class MauiProgram
         builder.Services.AddTransient<LibraryPage>();
         builder.Services.AddTransient<FavoritesPage>();
         builder.Services.AddTransient<EqualizerPage>();
+        builder.Services.AddTransient<SplashPage>();
         builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<AboutPage>();
         builder.Services.AddSingleton<AppShell>();
