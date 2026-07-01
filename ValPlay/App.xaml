@@ -17,6 +17,7 @@
             <conv:ShuffleToColorConverter x:Key="ShuffleColorConverter" />
             <conv:MediaTypeToIconConverter x:Key="MediaIconConverter" />
             <conv:BoolToFullscreenIconConverter x:Key="FullscreenIconConverter" />
+            <conv:SelectionBackgroundConverter x:Key="SelectionBackgroundConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

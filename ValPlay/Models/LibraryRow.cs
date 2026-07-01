@@ -1,15 +1,19 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using ValPlay.Helpers;
 using ValPlay.Services;
 
 namespace ValPlay.Models;
 
-public sealed class LibraryRow
+public partial class LibraryRow : ObservableObject
 {
     public required LibraryEntryKind Kind { get; init; }
     public required string Title { get; init; }
     public required string Subtitle { get; init; }
     public required string Path { get; init; }
     public MediaItem? Media { get; init; }
+
+    [ObservableProperty]
+    private bool _isSelected;
 
     public static LibraryRow FromFolder(MediaFolder folder, ILocalizationService localization) => new()
     {

@@ -17,7 +17,7 @@
     </ContentPage.Resources>
 
     <controls:VwSafeAreaLayout>
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" Padding="12" RowSpacing="10">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" Padding="12" RowSpacing="10">
 
             <Grid Grid.Row="0"
                   ColumnDefinitions="*,*,*"
@@ -36,10 +36,19 @@
                         Style="{StaticResource VwQuickPlayButton}" />
             </Grid>
 
-            <SearchBar Grid.Row="1"
-                       Placeholder="{Binding SearchPlaceholder}"
-                       Text="{Binding SearchText}"
-                       Style="{StaticResource VwSearchBar}" />
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <SearchBar Placeholder="{Binding SearchPlaceholder}"
+                           Text="{Binding SearchText}"
+                           Style="{StaticResource VwSearchBar}" />
+                <Button Grid.Column="1"
+                        Text="{Binding SelectModeLabel}"
+                        Command="{Binding ToggleSelectionModeCommand}"
+                        Style="{StaticResource VwIconActionButton}"
+                        FontSize="13"
+                        Padding="10,6"
+                        IsEnabled="{Binding HasRows}"
+                        IsVisible="{Binding IsSearchMode}" />
+            </Grid>
 
             <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
                 <Picker Title="{Binding ScanFolderTitle}"
@@ -70,19 +79,55 @@
                        FontSize="18"
                        VerticalOptions="Center"
                        LineBreakMode="TailTruncation" />
+                <Button Grid.Column="2"
+                        Text="{Binding SelectModeLabel}"
+                        Command="{Binding ToggleSelectionModeCommand}"
+                        Style="{StaticResource VwIconActionButton}"
+                        FontSize="13"
+                        Padding="10,6"
+                        IsEnabled="{Binding HasRows}"
+                        IsVisible="{Binding IsSearchMode, Converter={StaticResource InvertedBoolConverter}}" />
             </Grid>
 
-            <ActivityIndicator Grid.Row="4"
+            <Grid Grid.Row="4"
+                  ColumnDefinitions="*,Auto,Auto"
+                  ColumnSpacing="8"
+                  IsVisible="{Binding IsSelectionMode}">
+                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                    <Button Text="{Binding PlaySelectedLabel}"
+                            Command="{Binding PlaySelectedCommand}"
+                            Style="{StaticResource VwPrimaryButton}"
+                            HorizontalOptions="Start"
+                            HeightRequest="48" />
+                    <Label Text="{Binding SelectionStatus}"
+                           Style="{StaticResource VwCaption}"
+                           IsVisible="{Binding SelectedCount}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1"
+                        Text="{Binding SelectAllLabel}"
+                        Command="{Binding SelectAllCommand}"
+                        Style="{StaticResource VwIconActionButton}"
+                        FontSize="13"
+                        VerticalOptions="Center" />
+                <Button Grid.Column="2"
+                        Text="{Binding ClearSelectionLabel}"
+                        Command="{Binding ClearSelectionCommand}"
+                        Style="{StaticResource VwIconActionButton}"
+                        FontSize="13"
+                        VerticalOptions="Center" />
+            </Grid>
+
+            <ActivityIndicator Grid.Row="5"
                                IsRunning="{Binding IsScanning}"
                                IsVisible="{Binding IsScanning}"
                                Color="{StaticResource Accent}" />
 
-            <Label Grid.Row="4"
+            <Label Grid.Row="5"
                    Text="{Binding StatusMessage}"
                    Style="{StaticResource VwCaption}"
                    IsVisible="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}" />
 
-            <CollectionView Grid.Row="5"
+            <CollectionView Grid.Row="6"
                             ItemsSource="{Binding Rows}"
                             SelectionMode="None">
                 <CollectionView.EmptyView>
@@ -96,25 +141,33 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:LibraryRow">
                         <Grid Padding="10,8"
-                              ColumnDefinitions="Auto,*,Auto,Auto"
+                              ColumnDefinitions="Auto,Auto,*,Auto,Auto"
                               ColumnSpacing="8"
-                              BackgroundColor="{StaticResource Surface}">
+                              BackgroundColor="{Binding IsSelected, Converter={StaticResource SelectionBackgroundConverter}}">
                             <Grid.GestureRecognizers>
                                 <TapGestureRecognizer
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=OpenOrPlayCommand}"
                                     CommandParameter="{Binding .}" />
                             </Grid.GestureRecognizers>
 
-                            <Label Text="{Binding Kind, Converter={StaticResource FolderIconConverter}}"
+                            <CheckBox Grid.Column="0"
+                                      IsChecked="{Binding IsSelected}"
+                                      IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=IsSelectionMode}"
+                                      Color="{StaticResource Accent}"
+                                      VerticalOptions="Center" />
+
+                            <Label Grid.Column="1"
+                                   Text="{Binding Kind, Converter={StaticResource FolderIconConverter}}"
                                    FontSize="22"
                                    VerticalOptions="Center"
                                    IsVisible="{Binding Kind, Converter={StaticResource IsFolderConverter}}" />
-                            <Label Text="{Binding Media.Type, Converter={StaticResource MediaIconConverter}}"
+                            <Label Grid.Column="1"
+                                   Text="{Binding Media.Type, Converter={StaticResource MediaIconConverter}}"
                                    FontSize="22"
                                    VerticalOptions="Center"
                                    IsVisible="{Binding Kind, Converter={StaticResource IsMediaConverter}}" />
 
-                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Spacing="2">
                                 <Label Text="{Binding Title}"
                                        FontSize="18"
                                        TextColor="{StaticResource TextPrimary}"
@@ -123,7 +176,7 @@
                                        Style="{StaticResource VwCaption}" />
                             </VerticalStackLayout>
 
-                            <Button Grid.Column="2"
+                            <Button Grid.Column="3"
                                     Text="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayFolderIcon}"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayFolderCommand}"
                                     CommandParameter="{Binding .}"
@@ -133,9 +186,17 @@
                                     HeightRequest="56"
                                     FontSize="14"
                                     CornerRadius="28"
-                                    VerticalOptions="Center" />
+                                    VerticalOptions="Center">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button"
+                                                 Binding="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=IsSelectionMode}"
+                                                 Value="True">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
 
-                            <Button Grid.Column="3"
+                            <Button Grid.Column="4"
                                     Text="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayItemIcon}"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayItemCommand}"
                                     CommandParameter="{Binding .}"
@@ -145,7 +206,15 @@
                                     HeightRequest="56"
                                     CornerRadius="28"
                                     FontSize="18"
-                                    VerticalOptions="Center" />
+                                    VerticalOptions="Center">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button"
+                                                 Binding="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=IsSelectionMode}"
+                                                 Value="True">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

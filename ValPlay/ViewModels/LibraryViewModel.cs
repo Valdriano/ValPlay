@@ -31,6 +31,7 @@ public partial class LibraryViewModel : ObservableObject
             OnPropertyChanged(string.Empty);
             RefreshView();
             NotifyQuickPlayState();
+            NotifySelectionState();
         };
 
         ScanRoots = new ObservableCollection<string>(_mediaLibraryService.GetDefaultScanRoots());
@@ -56,12 +57,18 @@ public partial class LibraryViewModel : ObservableObject
     public string PlayFolderIcon => "📂▶";
     public string PlayItemIcon => "▶";
     public string BackLabel => "◀";
+    public string SelectModeLabel => IsSelectionMode
+        ? $"✕ {_localization.GetString("Library_SelectModeOff")}"
+        : $"☑ {_localization.GetString("Library_SelectMode")}";
+    public string PlaySelectedLabel => $"▶ {_localization.GetString("Library_PlaySelected")}";
+    public string SelectAllLabel => $"☑ {_localization.GetString("Library_SelectAll")}";
+    public string ClearSelectionLabel => $"✕ {_localization.GetString("Library_ClearSelection")}";
 
     public bool CanPlayAllAudio => _mediaLibraryService.Items.Any(item => item.Type == MediaType.Audio);
-
     public bool CanPlayAllVideo => _mediaLibraryService.Items.Any(item => item.Type == MediaType.Video);
-
     public bool CanPlayAllMedia => _mediaLibraryService.Items.Count > 0;
+    public bool CanPlaySelected => SelectedCount > 0;
+    public bool HasRows => Rows.Count > 0;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -87,9 +94,32 @@ public partial class LibraryViewModel : ObservableObject
     [ObservableProperty]
     private bool _canGoBack;
 
-    partial void OnSearchTextChanged(string value) => RefreshView();
+    [ObservableProperty]
+    private bool _isSelectionMode;
+
+    [ObservableProperty]
+    private int _selectedCount;
+
+    [ObservableProperty]
+    private string _selectionStatus = string.Empty;
+
+    partial void OnSearchTextChanged(string value)
+    {
+        if (IsSelectionMode)
+            ExitSelectionMode();
+
+        RefreshView();
+    }
 
     partial void OnBrowsePathChanged(string? value) => UpdateNavigationState();
+
+    partial void OnIsSelectionModeChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SelectModeLabel));
+        NotifySelectionState();
+    }
+
+    partial void OnSelectedCountChanged(int value) => NotifySelectionState();
 
     [RelayCommand]
     private async Task ScanAsync()
@@ -108,6 +138,7 @@ public partial class LibraryViewModel : ObservableObject
 
             await _mediaLibraryService.ScanAsync(SelectedScanRoot);
             BrowsePath = _mediaLibraryService.LastScanPath ?? SelectedScanRoot;
+            ExitSelectionMode();
             RefreshView();
         }
         catch (Exception ex)
@@ -121,10 +152,61 @@ public partial class LibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleSelectionMode()
+    {
+        if (IsSelectionMode)
+            ExitSelectionMode();
+        else
+            IsSelectionMode = true;
+    }
+
+    [RelayCommand]
+    private void ToggleRowSelection(LibraryRow row)
+    {
+        row.IsSelected = !row.IsSelected;
+        UpdateSelectedCount();
+    }
+
+    [RelayCommand]
+    private void SelectAll()
+    {
+        foreach (var row in Rows)
+            row.IsSelected = true;
+
+        UpdateSelectedCount();
+    }
+
+    [RelayCommand]
+    private void ClearSelection()
+    {
+        foreach (var row in Rows)
+            row.IsSelected = false;
+
+        UpdateSelectedCount();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanPlaySelected))]
+    private async Task PlaySelectedAsync()
+    {
+        var playlist = BuildPlaylistFromSelection();
+        if (playlist.Count == 0)
+            return;
+
+        ExitSelectionMode();
+        await PlayPlaylistAsync(playlist);
+    }
+
+    [RelayCommand]
     private void OpenFolder(LibraryRow row)
     {
         if (row.Kind != LibraryEntryKind.Folder)
             return;
+
+        if (IsSelectionMode)
+        {
+            ToggleRowSelection(row);
+            return;
+        }
 
         BrowsePath = row.Path;
         SearchText = string.Empty;
@@ -134,6 +216,12 @@ public partial class LibraryViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenOrPlayAsync(LibraryRow row)
     {
+        if (IsSelectionMode)
+        {
+            ToggleRowSelection(row);
+            return;
+        }
+
         if (row.Kind == LibraryEntryKind.Folder)
             OpenFolder(row);
         else
@@ -145,6 +233,9 @@ public partial class LibraryViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(BrowsePath))
             return;
+
+        if (IsSelectionMode)
+            ExitSelectionMode();
 
         var parent = Path.GetDirectoryName(BrowsePath);
         var root = GetBrowseRoot();
@@ -173,9 +264,7 @@ public partial class LibraryViewModel : ObservableObject
         if (playlist.Count == 0)
             return;
 
-        _playbackService.SetPlaylist(playlist, 0);
-        _playbackService.Play(playlist[0]);
-        await Shell.Current.GoToAsync("//PlayerPage");
+        await PlayPlaylistAsync(playlist);
     }
 
     [RelayCommand]
@@ -214,6 +303,27 @@ public partial class LibraryViewModel : ObservableObject
     private async Task PlayAllMediaAsync() =>
         await PlayPlaylistAsync(_mediaLibraryService.Items);
 
+    private List<MediaItem> BuildPlaylistFromSelection()
+    {
+        var playlist = new List<MediaItem>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var row in Rows.Where(r => r.IsSelected))
+        {
+            IEnumerable<MediaItem> items = row.Kind == LibraryEntryKind.Folder
+                ? _mediaLibraryService.GetItemsInFolder(row.Path, recursive: true)
+                : row.Media is not null ? [row.Media] : [];
+
+            foreach (var item in items)
+            {
+                if (seen.Add(item.Path))
+                    playlist.Add(item);
+            }
+        }
+
+        return playlist;
+    }
+
     private async Task PlayPlaylistAsync(IEnumerable<MediaItem> items)
     {
         var playlist = items.ToList();
@@ -223,6 +333,24 @@ public partial class LibraryViewModel : ObservableObject
         _playbackService.SetPlaylist(playlist, 0);
         _playbackService.Play(playlist[0]);
         await Shell.Current.GoToAsync("//PlayerPage");
+    }
+
+    private void ExitSelectionMode()
+    {
+        IsSelectionMode = false;
+        foreach (var row in Rows)
+            row.IsSelected = false;
+
+        SelectedCount = 0;
+        SelectionStatus = string.Empty;
+    }
+
+    private void UpdateSelectedCount()
+    {
+        SelectedCount = Rows.Count(r => r.IsSelected);
+        SelectionStatus = SelectedCount > 0
+            ? _localization.GetString("Library_SelectionCount", SelectedCount)
+            : string.Empty;
     }
 
     private void NotifyQuickPlayState()
@@ -235,11 +363,30 @@ public partial class LibraryViewModel : ObservableObject
         PlayAllMediaCommand.NotifyCanExecuteChanged();
     }
 
+    private void NotifySelectionState()
+    {
+        OnPropertyChanged(nameof(CanPlaySelected));
+        OnPropertyChanged(nameof(HasRows));
+        OnPropertyChanged(nameof(SelectModeLabel));
+        OnPropertyChanged(nameof(PlaySelectedLabel));
+        OnPropertyChanged(nameof(SelectAllLabel));
+        OnPropertyChanged(nameof(ClearSelectionLabel));
+        PlaySelectedCommand.NotifyCanExecuteChanged();
+    }
+
     private void RefreshView()
     {
         IsScanning = _mediaLibraryService.IsScanning;
+        var wasSelectionMode = IsSelectionMode;
         Rows.Clear();
         NotifyQuickPlayState();
+        NotifySelectionState();
+
+        if (wasSelectionMode)
+        {
+            SelectedCount = 0;
+            SelectionStatus = string.Empty;
+        }
 
         IsSearchMode = !string.IsNullOrWhiteSpace(SearchText);
 
@@ -251,12 +398,14 @@ public partial class LibraryViewModel : ObservableObject
                 item.FileName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
             foreach (var item in query)
-                Rows.Add(LibraryRow.FromMedia(item, _localization));
+            AddRow(LibraryRow.FromMedia(item, _localization));
 
             if (!IsScanning)
                 StatusMessage = Rows.Count == 0
                     ? _localization.GetString("Library_Status_NoSearchResults")
                     : _localization.GetString("Library_Status_SearchResults", Rows.Count);
+
+            NotifySelectionState();
             return;
         }
 
@@ -265,10 +414,10 @@ public partial class LibraryViewModel : ObservableObject
             BrowsePath = currentPath;
 
         foreach (var folder in _mediaLibraryService.GetSubfolders(currentPath))
-            Rows.Add(LibraryRow.FromFolder(folder, _localization));
+            AddRow(LibraryRow.FromFolder(folder, _localization));
 
         foreach (var item in _mediaLibraryService.GetItemsInFolder(currentPath))
-            Rows.Add(LibraryRow.FromMedia(item, _localization));
+            AddRow(LibraryRow.FromMedia(item, _localization));
 
         UpdateNavigationState();
 
@@ -280,6 +429,19 @@ public partial class LibraryViewModel : ObservableObject
                 ? _localization.GetString("Library_Status_EmptyFolder")
                 : _localization.GetString("Library_Status_FolderSummary", folderCount, fileCount);
         }
+
+        NotifySelectionState();
+    }
+
+    private void AddRow(LibraryRow row)
+    {
+        row.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(LibraryRow.IsSelected))
+                UpdateSelectedCount();
+        };
+
+        Rows.Add(row);
     }
 
     private void UpdateNavigationState()

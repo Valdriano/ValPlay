@@ -27,6 +27,12 @@
   <data name="Library_PlayAllMedia" xml:space="preserve"><value>Reproducir todo</value></data>
   <data name="Library_PlayFolder" xml:space="preserve"><value>Reproducir carpeta</value></data>
   <data name="Library_PlayItem" xml:space="preserve"><value>Reproducir</value></data>
+  <data name="Library_SelectMode" xml:space="preserve"><value>Seleccionar</value></data>
+  <data name="Library_SelectModeOff" xml:space="preserve"><value>Cancelar selección</value></data>
+  <data name="Library_PlaySelected" xml:space="preserve"><value>Reproducir seleccionados</value></data>
+  <data name="Library_SelectAll" xml:space="preserve"><value>Seleccionar todos</value></data>
+  <data name="Library_ClearSelection" xml:space="preserve"><value>Limpiar selección</value></data>
+  <data name="Library_SelectionCount" xml:space="preserve"><value>{0} seleccionado(s)</value></data>
   <data name="Settings_Title" xml:space="preserve"><value>Configuración</value></data>
   <data name="Settings_Playback" xml:space="preserve"><value>Reproducción</value></data>
   <data name="Settings_Shuffle" xml:space="preserve"><value>Modo aleatorio</value></data>
