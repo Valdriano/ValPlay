@@ -6,11 +6,13 @@ namespace ValPlay;
 public partial class AppShell : Shell
 {
     private readonly ILocalizationService _localization;
+    private readonly SplashPage _splashPage;
     private readonly ShellContent _libraryTab;
     private readonly ShellContent _favoritesTab;
     private readonly ShellContent _playerTab;
     private readonly ShellContent _settingsTab;
     private readonly ShellContent _aboutTab;
+    private bool _splashShown;
 
     public AppShell(
         LibraryPage libraryPage,
@@ -18,11 +20,16 @@ public partial class AppShell : Shell
         PlayerPage playerPage,
         SettingsPage settingsPage,
         AboutPage aboutPage,
+        SplashPage splashPage,
         ILocalizationService localization)
     {
         InitializeComponent();
         FlyoutBehavior = FlyoutBehavior.Disabled;
         _localization = localization;
+        _splashPage = splashPage;
+
+        Opacity = 0;
+        BackgroundColor = Color.FromArgb("#0D1117");
 
         _libraryTab = new ShellContent
         {
@@ -71,6 +78,34 @@ public partial class AppShell : Shell
         MainTabBar.Items.Add(_aboutTab);
 
         _localization.LanguageChanged += (_, _) => UpdateTabTitles();
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _ = ShowSplashIfNeededAsync();
+    }
+
+    private async Task ShowSplashIfNeededAsync()
+    {
+        if (_splashShown)
+            return;
+
+        _splashShown = true;
+
+        try
+        {
+            if (Navigation.ModalStack.Count == 0)
+                await Navigation.PushModalAsync(_splashPage, animated: false);
+        }
+        catch
+        {
+            // Splash opcional — não impede o uso do app.
+        }
+        finally
+        {
+            Opacity = 1;
+        }
     }
 
     private void UpdateTabTitles()

@@ -1,17 +1,14 @@
-using Microsoft.Extensions.DependencyInjection;
 using ValPlay.Services;
 
 namespace ValPlay.Pages;
 
 public partial class SplashPage : ContentPage
 {
-    private readonly IServiceProvider _services;
     private readonly AppBootstrapper _bootstrapper;
     private bool _animationStarted;
 
-    public SplashPage(IServiceProvider services, AppBootstrapper bootstrapper)
+    public SplashPage(AppBootstrapper bootstrapper)
     {
-        _services = services;
         _bootstrapper = bootstrapper;
         InitializeComponent();
     }
@@ -68,7 +65,7 @@ public partial class SplashPage : ContentPage
             .Commit(this, "SplashOut", length: 300, easing: Easing.CubicIn, finished: (_, _) => fadeOutTcs.TrySetResult());
         await fadeOutTcs.Task;
 
-        await NavigateToShellAsync();
+        await CloseSplashAsync();
     }
 
     private async Task InitializeAppInBackgroundAsync()
@@ -83,17 +80,9 @@ public partial class SplashPage : ContentPage
         }
     }
 
-    private async Task NavigateToShellAsync()
+    private async Task CloseSplashAsync()
     {
-        var window = Application.Current?.Windows.FirstOrDefault();
-        if (window is null)
-            return;
-
-        var shell = _services.GetRequiredService<AppShell>();
-
-        await MainThread.InvokeOnMainThreadAsync(() =>
-        {
-            window.Page = shell;
-        });
+        if (Navigation.ModalStack.Count > 0)
+            await Navigation.PopModalAsync(animated: false);
     }
 }

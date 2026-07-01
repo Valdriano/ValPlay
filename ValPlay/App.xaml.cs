@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using ValPlay.Pages;
 
 namespace ValPlay;
 
@@ -17,7 +16,7 @@ public partial class App : Application
             ?? IPlatformApplication.Current?.Services
             ?? throw new InvalidOperationException("Serviços do aplicativo indisponíveis.");
 
-        var splash = services.GetRequiredService<SplashPage>();
-        return new Window(splash);
+        var shell = services.GetRequiredService<AppShell>();
+        return new Window(shell);
     }
 }
